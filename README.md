@@ -1,9 +1,11 @@
-# CS50 TSE
-## Student name (GitHub username)
+## Hugo Fang - CS50 Winter 2024, Lab 4
+GitHub username: hugo2f
 
-The assignment and Specs are in a [public repo](https://github.com/CS50DartmouthWI24/labs/tse).
-Do not clone that repo; view it on GitHub.
-Watch there for any commits that may represent updates to the assignment or specs.
 
-Add here any assumptions you made while writing the crawler, any ways in which your implementation differs from the three Specs, or any ways in which you know your implementation fails to work.
+## Assumptions & Notes
+`indexer` and `querier` are commented out in the root Makefile, as they are not finished yet.
 
+As per REQUIREMENTS.md, we assume `pageDirectory` to not contain any files whose name is an integer.
+
+On any type of error, the crawler will exit with a corresponding errno described in `crawler.c`. In particular, if `pagedir_init()` returns false (see `pagedir.h` for details), the crawler will not run. When a given URL is unretrievable, the crawler will skip it and continue with any remaining URLs to explore.
+ 
