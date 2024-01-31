@@ -43,4 +43,4 @@ clean:
 	rm -f crawler
 	rm -f *~ *.o
 	rm -rf *.dSYM
-	rm -rf ../data/*
+	rm -rf ../data

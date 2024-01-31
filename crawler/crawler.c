@@ -62,7 +62,6 @@ void parseArgs(const int argc, char* argv[], char** seedURL_p,
   *seedURL_p = normalizeURL(argv[1]);
   if (!isInternalURL(*seedURL_p)) {
     printerrln("Crawler: seedURL is not an internal URL");
-    // free(*seedURL_p);
     exit(1);
   }
 
@@ -75,7 +74,6 @@ void parseArgs(const int argc, char* argv[], char** seedURL_p,
   // not an integer OR negative input
   if (!str2int(argv[3], maxDepth_p) || *maxDepth_p < 0) {
     printerrln("Crawler: maxDepth must be a non-negative integer");
-    // free(*seedURL_p);
     exit(1);
   }
 }
@@ -162,11 +160,6 @@ void crawl(char* seedURL, char* pageDirectory, const int maxDepth)
   }
 
   hashtable_delete(seen, NULL);
-  if (bag_extract(toVisit) != NULL) {
-    println("not empty yet");
-  } else {
-    println("empty, good");
-  }
   bag_delete(toVisit, webpage_delete);
 }
 
