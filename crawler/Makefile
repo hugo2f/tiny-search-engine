@@ -40,4 +40,4 @@ clean:
 	rm -f crawler
 	rm -f *~ *.o
 	rm -rf *.dSYM
-	rm -rf ../data../data_backup
+	rm -rf ../data ../data_backup
