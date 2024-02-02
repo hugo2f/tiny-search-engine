@@ -18,11 +18,8 @@ LLIBS = $L/libcs50.a
 .PHONY: clean
 
 # object files also depend on include files
-pagedir.o: pagedir.c webpage.h
+pagedir.o: pagedir.c $L/webpage.h
 print.o: print.c
-
-$(OBJS): %.o: %.c
-	$(CC) $(CFLAGS) -c $^ -o $@
 
 clean:
 	rm -f *~ *.o

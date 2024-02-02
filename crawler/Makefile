@@ -8,7 +8,7 @@ CC = gcc
 CFLAGS = -Wall -pedantic -std=c11 -ggdb -I$L -I../common $(LOGGING)
 VALGRIND = valgrind --leak-check=full --show-leak-kinds=all
 # uncomment to turn on crawler logging
-LOGGING = -DLOG
+# LOGGING = -DLOG
 
 # program specific
 SRCS = crawler.c ../common/pagedir.c ../common/print.c
@@ -29,6 +29,9 @@ crawler: $(OBJS) $(LLIBS)
 crawler.o: ../common/pagedir.h ../common/print.h $L/bag.h $L/hashtable.h $L/webpage.h
 pagedir.o: ../common/pagedir.h ../common/print.h $L/webpage.h
 print.o: ../common/print.h
+
+$(LLIBS):
+	if [[ ! -f $(LLIBS) ]]; then cp "$L/libcs50-given.a" "$(LLIBS)"; fi
 
 test: crawler testing.sh
 	bash -v ./testing.sh
