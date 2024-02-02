@@ -3,6 +3,7 @@
 # Hugo, 1/29/2024
 
 # general definitions
+C = ../common
 L = ../libcs50
 CC = gcc
 CFLAGS = -Wall -pedantic -std=c11 -ggdb -I$L -I../common $(LOGGING)
@@ -11,10 +12,10 @@ VALGRIND = valgrind --leak-check=full --show-leak-kinds=all
 # LOGGING = -DLOG
 
 # program specific
-SRCS = crawler.c ../common/pagedir.c ../common/print.c
+SRCS = crawler.c
 OBJS = $(SRCS:.c=.o)
 LIBS =
-LLIBS = $L/libcs50.a
+LLIBS = $L/libcs50.a $C/common.a
 
 .PHONY:	all clean test
 
@@ -23,15 +24,14 @@ all: crawler
 
 # executables
 crawler: $(OBJS) $(LLIBS)
+	make -C $C
 	$(CC) $(CFLAGS) $^ $(LIBS) -o $@
 
 # object files also depend on include files
-crawler.o: ../common/pagedir.h ../common/print.h $L/bag.h $L/hashtable.h $L/webpage.h
-pagedir.o: ../common/pagedir.h ../common/print.h $L/webpage.h
-print.o: ../common/print.h
+crawler.o: $C/pagedir.h $C/print.h $L/bag.h $L/hashtable.h $L/webpage.h
 
 $(LLIBS):
-	if [[ ! -f $(LLIBS) ]]; then cp "$L/libcs50-given.a" "$(LLIBS)"; fi
+	if [[ ! -f $L/libcs50.a ]]; then cp "$L/libcs50-given.a" "$L/libcs50.a"; fi
 
 test: crawler testing.sh
 	bash -v ./testing.sh

@@ -4,23 +4,27 @@
 
 # general definitions
 L = ../libcs50
+LIB = common.a
 CC = gcc
 CFLAGS = -Wall -pedantic -std=c11 -ggdb -I$L
 VALGRIND = valgrind --leak-check=full --show-leak-kinds=all
 # DEBUG = -ggdb (currently included in CFLAGS)
 
 # program specific
-SRCS = pagedir.c print.c
-OBJS = $(SRCS:.c=.o)
+OBJS = pagedir.o print.o
 LIBS =
 LLIBS = $L/libcs50.a
 
 .PHONY: clean
 
+$(LIB): $(OBJS)
+	ar cr $(LIB) $(OBJS)
+
 # object files also depend on include files
-pagedir.o: pagedir.c $L/webpage.h
-print.o: print.c
+pagedir.o: pagedir.h print.h $L/webpage.h
+print.o: print.h
 
 clean:
+	rm -f common.a
 	rm -f *~ *.o
 	rm -rf *.dSYM

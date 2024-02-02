@@ -15,6 +15,7 @@
 #include "webpage.h"
 
 #include "print.h"
+#include "pagedir.h"
 
 bool pagedir_init(const char* pageDirectory)
 {
