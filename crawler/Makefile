@@ -5,9 +5,10 @@
 # general definitions
 L = ../libcs50
 CC = gcc
-CFLAGS = -Wall -pedantic -std=c11 -ggdb -I$L -I../common $(DEBUG)
+CFLAGS = -Wall -pedantic -std=c11 -ggdb -I$L -I../common $(LOGGING)
 VALGRIND = valgrind --leak-check=full --show-leak-kinds=all
-DEBUG = -DLOG
+# uncomment to turn on crawler logging
+LOGGING = -DLOG
 
 # program specific
 SRCS = crawler.c ../common/pagedir.c ../common/print.c
@@ -29,15 +30,8 @@ crawler.o: ../common/pagedir.h ../common/print.h $L/bag.h $L/hashtable.h $L/webp
 pagedir.o: ../common/pagedir.h ../common/print.h $L/webpage.h
 print.o: ../common/print.h
 
-%.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
-
 test: crawler testing.sh
-	chmod +x ./testing.sh
 	bash -v ./testing.sh
-
-# make valgrind: crawler testing.sh
-# 	VALGRIND crawler
 
 clean:
 	rm -f crawler

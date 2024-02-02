@@ -82,7 +82,5 @@ bool pagedir_save(const webpage_t* page, const char* pageDirectory, const int do
   fprintf(fp, "%d\n", webpage_getDepth(page));
   fprintf(fp, "%s", webpage_getHTML(page));
   fclose(fp);
-  // println("saved");
-  // fflush(stdout);
   return true;
 }

@@ -145,6 +145,7 @@ void crawl(char* seedURL, char* pageDirectory, const int maxDepth)
   webpage_t* page;
   while ((page = bag_extract(toVisit)) != NULL) {
     if (!webpage_fetch(page)) {
+      webpage_delete(page);
       continue;
     }
     logr("Fetched", webpage_getDepth(page), webpage_getURL(page));
@@ -159,6 +160,7 @@ void crawl(char* seedURL, char* pageDirectory, const int maxDepth)
     docID++;
   }
 
+  // clean up
   hashtable_delete(seen, NULL);
   bag_delete(toVisit, webpage_delete);
 }
@@ -176,7 +178,13 @@ static void logr(const char* word, const int depth, const char* url)
 }
 
 /*
- * TODO
+ * Scans `page` for links, and adds any new pages to crawl into `pagesToCrawl`
+ * Updates `pagesSeen` to visit each URL once
+ * 
+ * Inputs:
+ *   page: webpage_t* that stores the HTML to scan
+ *   pagesToCrawl: stores pages to crawl
+ *   pagesSeen: stores visited URLs
  */
 static void pageScan(webpage_t* page, bag_t* pagesToCrawl, hashtable_t* pagesSeen)
 {
@@ -188,19 +196,21 @@ static void pageScan(webpage_t* page, bag_t* pagesToCrawl, hashtable_t* pagesSee
   int pos = 0, curDepth = webpage_getDepth(page);
   char* nextURL;
   while ((nextURL = webpage_getNextURL(page, &pos)) != NULL) {
+    char* normalizedURL = normalizeURL(nextURL);
+    free(nextURL);
     // skip external or visited URLs
-    logr("Found", curDepth, nextURL);
-    if (!isInternalURL(nextURL)) {
-      logr("IgnExtrn", curDepth, nextURL);
-      free(nextURL);
+    logr("Found", curDepth, normalizedURL);
+    if (!isInternalURL(normalizedURL)) {
+      logr("IgnExtrn", curDepth, normalizedURL);
+      free(normalizedURL);
       continue;
     } 
-    if (!hashtable_insert(pagesSeen, nextURL, "")) {
-      logr("IgnDupl", curDepth, nextURL);
-      free(nextURL);
+    if (!hashtable_insert(pagesSeen, normalizedURL, "")) {
+      logr("IgnDupl", curDepth, normalizedURL);
+      free(normalizedURL);
       continue;
     }
-    webpage_t* nextPage = webpage_new(nextURL, curDepth + 1, NULL);
+    webpage_t* nextPage = webpage_new(normalizedURL, curDepth + 1, NULL);
     logr("Added", curDepth, webpage_getURL(nextPage));
     bag_insert(pagesToCrawl, nextPage);
   }

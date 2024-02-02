@@ -1,73 +1,84 @@
 #!/bin/bash
 
-make clean
 make all
 
 # backup data
 directory="../data"
 if [ -d "$directory" ]; then
-  mv -r $directory ${directory}_backup
+  rm -rf ${directory}_backup
+  mv $directory ${directory}_backup
 fi
 
-# Invalid arguments:
+# -----Invalid arguments-----
+argDir="../data/args"
+mkdir -p $argDir
+
 # number of arguments
 ./crawler arg1 arg2 arg3 arg4
 ./crawler arg
-# bad seedURL, pageDirectory, maxDepth, nonexistent seedURL
-mkdir -p ../data/args
-./crawler http://www.4399.com/ ../data/args 1
+
+# bad seedURL
+./crawler asdf.fdsa.com $argDir 1
+# external seedURL
+./crawler http://www.4399.com/ $argDir 1
+# nonexistent seedURL
+./crawler http://cs50tse.cs.dartmouth.edu/tse/letters/nonexistent/ $argDir 1
+
+# nonexistent pageDirectory
 ./crawler http://cs50tse.cs.dartmouth.edu/tse/letters/ ./nonexistent 1
-./crawler http://cs50tse.cs.dartmouth.edu/tse/letters/ ../data/args -1
-./crawler http://cs50tse.cs.dartmouth.edu/tse/letters/nonexistent/ ../data/args 1
-# rm -rf ../data/args
+
+# non-integer maxDepth
+./crawler http://cs50tse.cs.dartmouth.edu/tse/letters/ $argDir NAN
+# negative maxDepth
+./crawler http://cs50tse.cs.dartmouth.edu/tse/letters/ $argDir -1
 
 
-# # Valgrind test
-# rm -rf ../data
-# mkdir -p ../data/valgrind
-# valgrind --leak-check=full --show-leak-kinds=all ./crawler http://cs50tse.cs.dartmouth.edu/tse/toscrape/ ../data/valgrind 1
+# -----Valgrind test-----
+# valgrindDir="../data/valgrind"
+# mkdir -p $valgrindDir
+# valgrind --leak-check=full --show-leak-kinds=all ./crawler http://cs50tse.cs.dartmouth.edu/tse/toscrape/ $valgrindDir 1
 
 
-# letters, toscrape, wikipedia
-rm -rf ../data/letters ../data/toscrape ../data/wikipedia
-mkdir ../data/letters ../data/toscrape ../data/wikipedia
-# letters - 0 TODO: what if I don't rm -rf?
+# -----System tests-----
+lettersDir="../data/letters"
+toscrapeDir="../data/toscrape"
+wikiDir="../data/wikipedia"
+mkdir $lettersDir $toscrapeDir $wikiDir
+
+# ---letters---
+# letters - maxDepth 0
 ./crawler http://cs50tse.cs.dartmouth.edu/tse/letters/ ../data/letters 0
-# rm -f ../data/letters/*
-# letters - 1
+
+# letters - maxDepth 1
 ./crawler http://cs50tse.cs.dartmouth.edu/tse/letters/ ../data/letters 1
-rm -f ../data/letters/*
-# # letters - 2
-# ./crawler http://cs50tse.cs.dartmouth.edu/tse/letters/ ../data/letters 2
-# rm -f ../data/letters/*
-# # letters - 10
-# ./crawler http://cs50tse.cs.dartmouth.edu/tse/letters/ ../data/letters 10
-# rm -f ../data/letters/*
+
+# letters - maxDepth 2
+./crawler http://cs50tse.cs.dartmouth.edu/tse/letters/ ../data/letters 2
+
+# letters - maxDepth 10
+./crawler http://cs50tse.cs.dartmouth.edu/tse/letters/ ../data/letters 10
 
 
-# # toscrape - 0
-# ./crawler http://cs50tse.cs.dartmouth.edu/tse/toscrape/ ../data/toscrape 0
-# rm -f ../data/toscrape/*
-# # toscrape - 1
-# ./crawler http://cs50tse.cs.dartmouth.edu/tse/toscrape/ ../data/toscrape 1
-# rm -f ../data/toscrape/*
-# # toscrape - 2
+# ---toscrape---
+toscrape - maxDepth 0
+./crawler http://cs50tse.cs.dartmouth.edu/tse/toscrape/ ../data/toscrape 0
+
+# toscrape - maxDepth 1
+./crawler http://cs50tse.cs.dartmouth.edu/tse/toscrape/ ../data/toscrape 1
+
+# # toscrape - maxDepth 2
 # ./crawler http://cs50tse.cs.dartmouth.edu/tse/toscrape/ ../data/toscrape 2
-# rm -f ../data/toscrape/*
-# # toscrape - 3
+
+# # toscrape - maxDepth 3
 # ./crawler http://cs50tse.cs.dartmouth.edu/tse/toscrape/ ../data/toscrape 3
-# rm -f ../data/toscrape/*
 
 
+# ---wikipedia---
+# wikipedia - maxDepth 0
+./crawler http://cs50tse.cs.dartmouth.edu/tse/wikipedia/ ../data/wikipedia 0
 
-# # wikipedia - 0
-# ./crawler http://cs50tse.cs.dartmouth.edu/tse/wikipedia/ ../data/wikipedia 0
-# rm -f ../data/wikipedia/*
-# # wikipedia - 1
-# ./crawler http://cs50tse.cs.dartmouth.edu/tse/wikipedia/ ../data/wikipedia 1
-# rm -f ../data/wikipedia/*
-# # wikipedia - 2
+# wikipedia - maxDepth 1
+./crawler http://cs50tse.cs.dartmouth.edu/tse/wikipedia/ ../data/wikipedia 1
+
+# # wikipedia - maxDepth 2
 # ./crawler http://cs50tse.cs.dartmouth.edu/tse/wikipedia/ ../data/wikipedia 2
-# rm -f ../data/wikipedia/*
-
-# TODO: try different seed urls in each of letters, toscrape, wikipedia
