@@ -29,12 +29,6 @@ crawler: $(OBJS) $(LLIBS)
 # object files also depend on include files
 crawler.o: $C/pagedir.h $C/print.h $L/bag.h $L/hashtable.h $L/webpage.h
 
-$L/libcs50.a:
-	if [[ ! -f $L/libcs50.a ]]; then cp "$L/libcs50-given.a" "$L/libcs50.a"; fi
-
-$C/common.a:
-	make -C $C
-
 test: crawler testing.sh
 	bash -v ./testing.sh
 
