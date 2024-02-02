@@ -1,7 +1,5 @@
 #!/bin/bash
 
-make all
-
 # backup data
 directory="../data"
 if [ -d "$directory" ]; then
