@@ -12,6 +12,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+
+// libcs50
 #include "webpage.h"
 
 /*
@@ -36,15 +38,28 @@ bool pagedir_init(const char* pageDirectory);
  * Input:
  *   page: webpage_t* containing the page content and metadata
  *   pageDirectory: directory to save the page in
- *   docID: name of file (a number)
+ *   docID: name of file (int greater than 0)
  *   
  * Returns:
  *   true if success
  *   false if any error occurs:
- *     pageDirectory is NULL or invalid, page is NULL, fileID <= 0 (IDs should
- *     start from 1), file creation/write failure
+ *     pageDirectory is NULL or invalid, page is NULL, docID <= 0, file creation/write failure
  */
 bool pagedir_save(const webpage_t* page, const char* pageDirectory, const int docID);
+
+/*
+ * Loads a file saved by pagedir_save(), into a webpage_t*
+ * 
+ * Input:
+ *   pageDirectory: file to load the page from
+ *   docID: name of file (int greater than 0)
+ *   
+ * Returns:
+ *   webpage_t* containing file contents if success
+ *   NULL if any error occurs:
+ *     pageDirectory is NULL or invalid, page is NULL, docID <= 0, file read failure
+ */
+webpage_t* pagedir_loadPageFromFile(const char* pageDirectory, const int docID);
 
 /*
  * Checks for the existence of "pageDirectory/.crawler", which

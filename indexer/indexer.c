@@ -22,19 +22,21 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-// header files in libcs50.a
+// libcs50.a
 #include "hashtable.h"
 #include "set.h"
 
+// common.a
 #include "pagedir.h"
 #include "print.h"
+#include "index.h"
 
 
 static void parseArgs(const int argc, char* argv[],
                       char** pageDirectory_p, char** indexFilename_p);
 // static bool str2int(const char string[], int* num_p);
 static void indexBuild(const char* pageDirectory);
-static void indexPage(const char* filePath);
+static void indexPage(index_t* idx, webpage_t* page, const int docID);
 
 int main(const int argc, char* argv[])
 {
@@ -46,7 +48,7 @@ int main(const int argc, char* argv[])
 }
 
 /*
- * checks argc == 3 (1 for "indexer", 2 for inputs)
+ * Checks argc == 3 (1 for "indexer", 2 for inputs),
  * make sure pageDirectory exists and contains ".crawler"
  * check indexFilename either:
  *   1. exists and is writeable (will be erased if nonempty), or
@@ -69,34 +71,47 @@ static void parseArgs(const int argc, char* argv[],
   }
 
   *indexFilename_p = argv[2];
-  if (!pagedir_isPathWriteable(indexFilename_p)) {
+  if (!pagedir_isPathWriteable(*indexFilename_p)) {
     fprintf(stderr, "Indexer: failed to write to %s\n", *indexFilename_p);
     exit(1);
   }
 }
 
-// /*
-//  * converts string to integer and stores in num_p
-//  * 
-//  * Returns false if num_p is NULL, fail to convert,
-//  * or input contains extra characters at the end
-//  * 
-//  * If string is NULL or empty, num_p is set to 0 and
-//  * treated as a success
-//  */
-// bool str2int(const char* string, int* num_p)
-// {
-//   if (num_p == NULL) {
-//     return false;
-//   }
+/*
+ * Creates a new index_t*, read all files in pageDirectory and build the index
+ *
+ * Inputs:
+ *   pageDirectory: directory to read files from
+ */
+void indexBuild(const char* pageDirectory)
+{
+  index_t* idx = index_new();
+  int docID = 1;
+  while (true) {
+    webpage_t* page = pagedir_loadPageFromFile(pageDirectory, docID);
+    // page doesn't exist, read all files
+    if (page == NULL) {
+      return;
+    }
+    indexPage(idx, page, docID);
+    docID++;
+  }
+}
 
-//   if (string == NULL || *string == '\0') {
-//     *num_p = 0;
-//     return true;
-//   } else {
-//     char extra;
-//     return (sscanf(string, "%d%c", num_p, &extra) == 1);
-//   }
-// }
-
-
+/*
+ * For a webpage, update index with the words in the html
+ *
+ * Inputs:
+ *   idx: index to update
+ *   page: webpage_t* containing the html
+ *   docID: name of file that `page` was read from
+ */
+void indexPage(index_t* idx, webpage_t* page, const int docID)
+{
+  char* word;
+  int pos = 0;
+  while ((word = webpage_getNextWord(page, &pos)) != NULL) {
+    index_addWord(idx, word, docID);
+    free(word);
+  }
+}

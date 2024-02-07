@@ -29,7 +29,7 @@ indextest: $(OBJS) $(LLIBS)
 	$(CC) $(CFLAGS) $^ $(LIBS) -o $@
 
 # object files also depend on include files TODO
-indexer.o:
+indexer.o: $L/hashtable.h $L/set.h $C/pagedir.h $C/print.h $C/index.h
 
 test: indextest testing.sh
 	bash -v ./testing.sh

@@ -11,7 +11,7 @@
 void normalizeWord(char* word)
 {
   if (word == NULL) {
-    return NULL;
+    return;
   }
   for (int i = 0; word[i] != '\0'; i++) {
     if (isalpha(word[i])) {

@@ -10,11 +10,16 @@
 #include <stdbool.h>
 #include <unistd.h>
 
-// from libcs50.a
+// libcs50.a
 #include "webpage.h"
+#include "file.h"
 
+// common.a
 #include "print.h"
 #include "pagedir.h"
+
+/* Private functions */
+static bool str2int(const char* string, int* num_p);
 
 bool pagedir_init(const char* pageDirectory)
 {
@@ -53,7 +58,7 @@ bool pagedir_init(const char* pageDirectory)
 
 bool pagedir_save(const webpage_t* page, const char* pageDirectory, const int docID)
 {
-  if (pageDirectory == NULL || page == NULL || docID <= 0) {
+  if (page == NULL || pageDirectory == NULL || docID <= 0) {
     return false;
   }
   // check validity and accessability of pageDirectory
@@ -83,6 +88,79 @@ bool pagedir_save(const webpage_t* page, const char* pageDirectory, const int do
   fprintf(fp, "%s", webpage_getHTML(page));
   fclose(fp);
   return true;
+}
+
+webpage_t* pagedir_loadPageFromFile(const char* pageDirectory, const int docID)
+{
+  if (pageDirectory == NULL || docID <= 0) {
+    return NULL;
+  }
+  // check validity and accessability of pageDirectory
+  if (access(pageDirectory, F_OK) == -1) {
+    return NULL;
+  }
+
+  // same logic as pagedir_save()
+  int idLength = snprintf(NULL, 0, "%d", docID);
+  size_t dirLen = strlen(pageDirectory);
+  char filePath[dirLen + idLength + 2]; // directory to target file
+  if (pageDirectory[dirLen - 1] == '/') {
+    snprintf(filePath, sizeof(filePath), "%s%d", pageDirectory, docID);
+  } else {
+    snprintf(filePath, sizeof(filePath), "%s/%d", pageDirectory, docID);
+  }
+  
+  FILE* fp = fopen(filePath, "r");
+  if (fp == NULL) {
+    return NULL;
+  }
+
+  // read url, depth, html
+  char* url = file_readLine(fp);
+  if (url == NULL) {
+    return NULL;
+  }
+  char* buffer = file_readLine(fp);
+  if (buffer == NULL) {
+    return NULL;
+  }
+  int depth;
+  if ((str2int(buffer, &depth)) == false) {
+    return NULL;
+  }
+  char* html = file_readLine(fp);
+  if (html == NULL) {
+    return NULL;
+  }
+
+  // create page from file contents
+  webpage_t* page = webpage_new(url, depth, html);
+  fclose(fp);
+  return page;
+}
+
+/*
+ * converts string to integer and stores in num_p
+ * 
+ * Returns false if num_p is NULL, failure to convert,
+ * or input contains extra characters at the end
+ * 
+ * If string is NULL or empty, num_p is set to 0 and
+ * treated as a success
+ */
+bool str2int(const char* string, int* num_p)
+{
+  if (num_p == NULL) {
+    return false;
+  }
+
+  if (string == NULL || *string == '\0') {
+    *num_p = 0;
+    return true;
+  } else {
+    char extra;
+    return (sscanf(string, "%d%c", num_p, &extra) == 1);
+  }
 }
 
 bool pagedir_isCrawlerDirectory(char* pageDirectory)

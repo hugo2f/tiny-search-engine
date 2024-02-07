@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 
 // contained in libcs50.a
 #include "hashtable.h"
@@ -21,6 +22,7 @@ typedef struct index {
 } index_t;
 
 /* Private function prototypes */
+static void counterDelete(void *item);
 static bool str2int(const char* string, int* num_p);
 static void index_setWordDocCount(index_t* idx, const char* word,
                                 const int docID, const int count);
@@ -43,11 +45,19 @@ index_t* index_new()
 void index_delete(index_t* idx)
 {
   // each item in the hashtable is a counter
-  hashtable_delete(idx->ht, counters_delete);
+  hashtable_delete(idx->ht, counterDelete);
   free(idx);
 }
 
-void index_addWord(index_t* idx, const char* word, const int docID)
+/*
+ * itemDelete() function passed into hashtable_delete()
+ */
+void counterDelete(void *item)
+{
+  counters_delete(item);
+}
+
+void index_addWord(index_t* idx, char* word, const int docID)
 {
   if (idx == NULL || word == NULL || strlen(word) < 3 || docID <= 0) {
     return;
@@ -209,7 +219,7 @@ void index_saveToFile(index_t* idx, const char* filePath)
 
   // iterate through the hashtable and save the entries
   // see below for details about saving hashtable and counter entries
-  hashtable_iterate(idx->ht, fp, saveHashtableEntry);
+  hashtable_iterate(idx->ht, fp, saveHashTableEntry);
   fclose(fp);
 }
 
@@ -225,7 +235,7 @@ void index_saveToFile(index_t* idx, const char* filePath)
  *   key: the word saved as a key in the hashtable
  *   item: the counter saved as an item in the hashtable
  */
-void saveHashtableEntry(void* arg, const char* key, void* item)
+void saveHashTableEntry(void* arg, const char* key, void* item)
 {
   FILE* fp = arg;
   counters_t* counter = item;

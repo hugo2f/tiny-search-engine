@@ -36,17 +36,19 @@ index_t* index_new();
 void index_delete(index_t* idx);
 
 /*
- * Update the index with an occurence of a word in a page
+ * Update the index with an occurence of a word in a page.
+ * Ignores words with length < 3 and normalizes (convert to
+ * lower case) the word in-place.
  *
  * Input:
  *   idx: index to update
- *   word to add, ignored if length < 3
+ *   word to add
  *   docID: file corresponding to the page containing `word`
  * 
  * The contents of `idx` will be undetermined if errors such as memory
  * allocation failure occur
  */
-void index_addWord(index_t* idx, const char* word, const int docID);
+void index_addWord(index_t* idx, char* word, const int docID);
 
 /*
  * Read a file, in the format written by index_saveToFile(), into an index_t
