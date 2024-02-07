@@ -11,18 +11,21 @@ VALGRIND = valgrind --leak-check=full --show-leak-kinds=all
 # DEBUG = -ggdb (currently included in CFLAGS)
 
 # program specific
-OBJS = pagedir.o print.o
+OBJS = pagedir.o print.o index.o word.o
 LIBS =
 LLIBS = $L/libcs50.a
 
 .PHONY: clean
 
+# main target: build the library
 $(LIB): $(OBJS)
 	ar cr $(LIB) $(OBJS)
 
 # object files also depend on include files
 pagedir.o: pagedir.h print.h $L/webpage.h
 print.o: print.h
+index.o: index.h $L/hashtable.h $L/counters.h $L/file.h
+word.o: word.h
 
 clean:
 	rm -f common.a

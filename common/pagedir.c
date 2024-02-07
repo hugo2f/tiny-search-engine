@@ -1,8 +1,7 @@
 /*
  * pagedir.c    Hugo Fang    1/18/2024
  * 
- * Handles validating and initializing a pageDirectory,
- * writing and reading page files
+ * See pagedir.h for details
  */
 
 #include <stdio.h>
@@ -82,6 +81,41 @@ bool pagedir_save(const webpage_t* page, const char* pageDirectory, const int do
   fprintf(fp, "%s\n", webpage_getURL(page));
   fprintf(fp, "%d\n", webpage_getDepth(page));
   fprintf(fp, "%s", webpage_getHTML(page));
+  fclose(fp);
+  return true;
+}
+
+bool pagedir_isCrawlerDirectory(char* pageDirectory)
+{
+  if (pageDirectory == NULL) {
+    return false;
+  }
+  
+  int dirLen = strlen(pageDirectory);
+  // if pageDirectory doesn't end in '/', allocate extra char
+  // in strlen("/.crawler")
+  char crawlerPath[dirLen + strlen("/.crawler") + 1];
+  if (pageDirectory[dirLen - 1] == '/') {
+    sprintf(crawlerPath, "%s%s", pageDirectory, ".crawler");
+  } else {
+    sprintf(crawlerPath, "%s%s", pageDirectory, "/.crawler");
+  }
+  if (access(crawlerPath, F_OK) == -1) {
+    fprintf(stderr, "Cannot find .crawler at %s\n", crawlerPath);
+    return false;
+  }
+  return true;
+}
+
+bool pagedir_isPathWriteable(char* filePath)
+{
+  if (filePath == NULL || access(filePath, F_OK) == -1) {
+    return false;
+  }
+  FILE* fp = fopen(filePath, "w");
+  if (fp == NULL) {
+    return false;
+  }
   fclose(fp);
   return true;
 }
