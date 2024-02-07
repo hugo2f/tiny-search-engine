@@ -1,7 +1,7 @@
 /*
  * crawler.c    Hugo Fang    1/29/2024
  * 
- * crawls from a starting URL to a certain depth, and stores html
+ * Crawls from a starting URL to a certain depth, and stores html
  * of pages found
  * 
  * Usage: crawler seedURL pageDirectory maxDepth
@@ -45,7 +45,7 @@ int main(const int argc, char* argv[])
 }
 
 /*
- * checks argc == 4 (1 for crawler, 3 for inputs)
+ * checks argc == 4 (1 for "crawler", 3 for inputs)
  * normalize seedURL and validate it is an internal URL
  * call pagedir_init() on pageDirectory
  * check maxDepth is a non-negative integer
@@ -55,7 +55,7 @@ void parseArgs(const int argc, char* argv[], char** seedURL_p,
                char** pageDirectory_p, int* maxDepth_p)
 {
   if (argc != 4) {
-    fprintf(stdout, "Usage: %s seedURL pageDirectory, maxDepth\n", argv[0]);
+    fprintf(stdout, "Usage: %s seedURL pageDirectory maxDepth\n", argv[0]);
     exit(1);
   }
 
