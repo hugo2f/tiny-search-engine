@@ -34,6 +34,6 @@ test: crawler testing.sh
 
 clean:
 	rm -f crawler
+	rm -rf ../data ../data_backup
 	rm -f *~ *.o
 	rm -rf *.dSYM
-	rm -rf ../data ../data_backup

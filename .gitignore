@@ -47,4 +47,7 @@ index_files
 querier_files
 
 # directory for regression testing
+data
 data_backup
+indexes
+indexes_backup

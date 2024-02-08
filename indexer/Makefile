@@ -37,6 +37,6 @@ test: indexer indextest testing.sh
 
 clean:
 	rm -f indexer indextest
-	rm -rf ../indexes
+	rm -rf ../indexes ../indexes_backup
 	rm -f *~ *.o
 	rm -rf *.dSYM
