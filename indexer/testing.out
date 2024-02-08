@@ -1,0 +1,145 @@
+bash -v ./testing.sh
+module () {  _module_raw "$@" 2>&1
+}
+ml () {  module ml "$@"
+}
+_module_raw () {  eval `/usr/bin/tclsh8.6 /usr/lib/x86_64-linux-gnu/modulecmd.tcl bash "$@"`;
+ _mlstatus=$?;
+ return $_mlstatus
+}
+#!/bin/bash
+# testing script for indexer
+
+# directory with tse data and sample outputs
+tseDir="$HOME/cs50-dev/shared/tse"
+
+
+# -----Invalid arguments-----
+# number of arguments
+./indexer
+Usage: ./indexer pageDirectory indexFilename
+./indexer arg1 arg2 arg3
+Usage: ./indexer pageDirectory indexFilename
+./indexer too many arguments provided
+Usage: ./indexer pageDirectory indexFilename
+
+# nonexistent pageDirectory
+./indexer ./nonexistent ./data
+Indexer: pageDirectory doesn't exist or doesn't contain ".crawler"
+
+# non-crawler pageDirectory
+./indexer ./ ./data
+Indexer: pageDirectory doesn't exist or doesn't contain ".crawler"
+
+# invalid indexFilename
+./indexer $tseDir/output/letters-0 ./nonexistent/asdf.index
+Indexer: failed to write to ./nonexistent/asdf.index
+
+# indexFilename is in readonly directory
+mkdir ./readOnlyDir
+chmod a=r ./readOnlyDir
+./indexer $tseDir/output/letters-0 ./readOnlyDir
+Indexer: failed to write to ./readOnlyDir
+rm -rf ./readOnlyDir
+
+# indexFilename is readonly TODO: try directories with and without slash
+touch ./readOnlyFile
+chmod a=r ./readOnlyFile
+./indexer $tseDir/output/letters-0 ./readOnlyFile
+Indexer: failed to write to ./readOnlyFile
+rm -rf ./readOnlyFile
+
+
+# -----Functional & Valgrind tests-----
+# backup indexes
+directory="../indexes"
+if [[ -d "$directory" ]]; then
+  rm -rf ${directory}_backup
+  mv $directory ${directory}_backup
+fi
+
+mkdir $directory
+myvalgrind="valgrind --leak-check=full --show-leak-kinds=all"
+
+# indexer (create the index, then compare with sample output using indexcmp)
+$myvalgrind ./indexer $tseDir/output/letters-0 ../indexes/letters-0.index
+==1736229== Memcheck, a memory error detector
+==1736229== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==1736229== Using Valgrind-3.18.1 and LibVEX; rerun with -h for copyright info
+==1736229== Command: ./indexer /thayerfs/home/f005cqh/cs50-dev/shared/tse/output/letters-0 ../indexes/letters-0.index
+==1736229== 
+==1736229== 
+==1736229== HEAP SUMMARY:
+==1736229==     in use at exit: 0 bytes in 0 blocks
+==1736229==   total heap usage: 579 allocs, 579 frees, 29,455 bytes allocated
+==1736229== 
+==1736229== All heap blocks were freed -- no leaks are possible
+==1736229== 
+==1736229== For lists of detected and suppressed errors, rerun with: -s
+==1736229== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+$tseDir/indexcmp ${directory}/letters-0.index $tseDir/output/letters-0.index
+
+$myvalgrind ./indexer $tseDir/output/letters-2 ../indexes/letters-2.index
+==1736231== Memcheck, a memory error detector
+==1736231== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==1736231== Using Valgrind-3.18.1 and LibVEX; rerun with -h for copyright info
+==1736231== Command: ./indexer /thayerfs/home/f005cqh/cs50-dev/shared/tse/output/letters-2 ../indexes/letters-2.index
+==1736231== 
+==1736231== 
+==1736231== HEAP SUMMARY:
+==1736231==     in use at exit: 0 bytes in 0 blocks
+==1736231==   total heap usage: 841 allocs, 841 frees, 77,229 bytes allocated
+==1736231== 
+==1736231== All heap blocks were freed -- no leaks are possible
+==1736231== 
+==1736231== For lists of detected and suppressed errors, rerun with: -s
+==1736231== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+$tseDir/indexcmp ${directory}/letters-2.index $tseDir/output/letters-2.index
+
+# $myvalgrind ./indexer $tseDir/output/toscrape-2 ../indexes/toscrape-2.index
+# $tseDir/indexcmp ${directory}/toscrape-2.index $tseDir/output/toscrape-2.index
+
+# $myvalgrind ./indexer $tseDir/output/wikipedia-2 ../indexes/wikipedia-2.index
+# $tseDir/indexcmp ${directory}/wikipedia-2.index $tseDir/output/wikipedia-2.index
+
+
+# indextest (copy from `name`.index to `name`-copy.index, then compare the two versions)
+$myvalgrind ./indextest ../indexes/letters-0.index ../indexes/letters-0-copy.index
+==1736244== Memcheck, a memory error detector
+==1736244== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==1736244== Using Valgrind-3.18.1 and LibVEX; rerun with -h for copyright info
+==1736244== Command: ./indextest ../indexes/letters-0.index ../indexes/letters-0-copy.index
+==1736244== 
+==1736244== 
+==1736244== HEAP SUMMARY:
+==1736244==     in use at exit: 0 bytes in 0 blocks
+==1736244==   total heap usage: 52 allocs, 52 frees, 18,518 bytes allocated
+==1736244== 
+==1736244== All heap blocks were freed -- no leaks are possible
+==1736244== 
+==1736244== For lists of detected and suppressed errors, rerun with: -s
+==1736244== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+$tseDir/indexcmp ../indexes/letters-0.index ../indexes/letters-0-copy.index
+
+$myvalgrind ./indextest ../indexes/letters-2.index ../indexes/letters-2-copy.index
+==1736256== Memcheck, a memory error detector
+==1736256== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==1736256== Using Valgrind-3.18.1 and LibVEX; rerun with -h for copyright info
+==1736256== Command: ./indextest ../indexes/letters-2.index ../indexes/letters-2-copy.index
+==1736256== 
+==1736256== 
+==1736256== HEAP SUMMARY:
+==1736256==     in use at exit: 0 bytes in 0 blocks
+==1736256==   total heap usage: 82 allocs, 82 frees, 19,225 bytes allocated
+==1736256== 
+==1736256== All heap blocks were freed -- no leaks are possible
+==1736256== 
+==1736256== For lists of detected and suppressed errors, rerun with: -s
+==1736256== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+$tseDir/indexcmp ../indexes/letters-2.index ../indexes/letters-2-copy.index
+
+# $myvalgrind ./indextest ../indexes/toscrape-2.index ../indexes/toscrape-2-copy.index
+# $tseDir/indexcmp ../indexes/toscrape-2.index ../indexes/toscrape-2-copy.index
+
+# $myvalgrind ./indextest ../indexes/wikipedia-2.index ../indexes/wikipedia-2-copy.index
+# $tseDir/indexcmp ../indexes/wikipedia-2.index ../indexes/wikipedia-2-copy.index
