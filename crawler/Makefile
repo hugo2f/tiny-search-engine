@@ -6,7 +6,7 @@
 C = ../common
 L = ../libcs50
 CC = gcc
-CFLAGS = -Wall -pedantic -std=c11 -ggdb -I$L -I../common $(LOGGING)
+CFLAGS = -Wall -pedantic -std=c11 -ggdb -I$C -I$L $(LOGGING)
 VALGRIND = valgrind --leak-check=full --show-leak-kinds=all
 # uncomment to turn on crawler logging
 # LOGGING = -DLOG
