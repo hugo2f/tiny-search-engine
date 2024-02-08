@@ -66,7 +66,8 @@ void index_addWord(index_t* idx, char* word, const int docID);
 index_t* index_readIndexFile(const char* filePath);
 
 /*
- * Write an index's contents into a file
+ * Write an index's contents into a file. If file is nonempty, its contents
+ * will be overwritten
  *
  * Input:
  *   index: index_t* of index to store the contents of

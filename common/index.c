@@ -28,7 +28,7 @@ static bool str2int(const char* string, int* num_p);
 static void index_setWordDocCount(index_t* idx, const char* word,
                                 const int docID, const int count);
 static index_t* index_newWithNumSlots(const int numSlots);
-static void saveHashTableEntry(void* arg, const char* key, void* item);
+static void saveHashtableEntry(void* arg, const char* key, void* item);
 static void saveCounterEntry(void* arg, const int key, const int item);
 
 /* Public functions */
@@ -125,6 +125,20 @@ index_t* index_readIndexFile(const char* filePath)
 }
 
 /*
+ * When reading from a file, number of words is known ->
+ * create an index with a hashtable initialized with numSlots
+ */
+index_t* index_newWithNumSlots(const int numSlots)
+{
+  index_t* idx = malloc(sizeof(index_t));
+  if (idx == NULL) {
+    return NULL;
+  }
+  idx->ht = hashtable_new(numSlots);
+  return idx;
+}
+
+/*
  * converts string to integer and stores in num_p
  * 
  * Returns false if num_p is NULL, failure to convert,
@@ -182,20 +196,6 @@ void index_setWordDocCount(index_t* idx, const char* word,
   counters_set(counter, docID, count); 
 }
 
-/*
- * When reading from a file, number of words is known ->
- * create an index with a hashtable initialized with numSlots
- */
-index_t* index_newWithNumSlots(const int numSlots)
-{
-  index_t* idx = malloc(sizeof(index_t));
-  if (idx == NULL) {
-    return NULL;
-  }
-  idx->ht = hashtable_new(numSlots);
-  return idx;
-}
-
 void index_saveToFile(index_t* idx, const char* filePath)
 {
   if (filePath == NULL) {
@@ -208,7 +208,7 @@ void index_saveToFile(index_t* idx, const char* filePath)
 
   // iterate through the hashtable and save the entries
   // see below for details about saving hashtable and counter entries
-  hashtable_iterate(idx->ht, fp, saveHashTableEntry);
+  hashtable_iterate(idx->ht, fp, saveHashtableEntry);
   fclose(fp);
 }
 
@@ -224,7 +224,7 @@ void index_saveToFile(index_t* idx, const char* filePath)
  *   key: the word saved as a key in the hashtable
  *   item: the counter saved as an item in the hashtable
  */
-void saveHashTableEntry(void* arg, const char* key, void* item)
+void saveHashtableEntry(void* arg, const char* key, void* item)
 {
   FILE* fp = arg;
   counters_t* counter = item;

@@ -12,13 +12,11 @@
 #include <stdlib.h>
 
 /*
- * Normalizes a word by turning all characters to lower case.
+ * Normalizes a word by turning all characters to lower case, in-place.
  * Non-alphabet characters are ignored
  * 
  * Input:
  *   word to normalize
- * 
- * word is modified in-place
  */
 char* normalizeWord(char* word);
 

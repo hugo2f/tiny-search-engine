@@ -195,7 +195,7 @@ bool pagedir_isCrawlerDirectory(char* pageDirectory)
   return true;
 }
 
-bool pagedir_isPathWriteable(char* filePath)
+bool pagedir_isFileWriteable(char* filePath)
 {
   if (filePath == NULL) {
     return false;

@@ -88,6 +88,6 @@ bool pagedir_isCrawlerDirectory(char* pageDirectory);
  *   true if writeable
  *   false if failure to create file at filePath
  */
-bool pagedir_isPathWriteable(char* filePath);
+bool pagedir_isFileWriteable(char* filePath);
 
 #endif // __PAGEDIR_H__

@@ -73,7 +73,7 @@ static void parseArgs(const int argc, char* argv[],
   }
 
   *indexFilename_p = argv[2];
-  if (!pagedir_isPathWriteable(*indexFilename_p)) {
+  if (!pagedir_isFileWriteable(*indexFilename_p)) {
     fprintf(stderr, "Indexer: failed to write to %s\n", *indexFilename_p);
     exit(1);
   }
@@ -94,12 +94,8 @@ index_t* indexBuild(const char* pageDirectory)
 {
   index_t* idx = index_new();
   int docID = 1;
-  while (true) {
-    webpage_t* page = pagedir_loadPageFromFile(pageDirectory, docID);
-    // page doesn't exist, read all files
-    if (page == NULL) {
-      break;
-    }
+  webpage_t* page;
+  while (page = pagedir_loadPageFromFile(pageDirectory, docID) != NULL) {
     indexPage(idx, page, docID);
     webpage_delete(page);
     docID++;
