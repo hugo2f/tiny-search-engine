@@ -18,7 +18,7 @@ LLIBS = $L/libcs50.a
 .PHONY: clean
 
 # main target: build the library
-$(LIB): $(OBJS)
+$(LIB): $(OBJS) $(LLIBS)
 	ar cr $(LIB) $(OBJS)
 
 # object files also depend on include files

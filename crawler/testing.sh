@@ -1,8 +1,9 @@
 #!/bin/bash
+# testing script for crawler
 
 # backup data
 directory="../data"
-if [ -d "$directory" ]; then
+if [[ -d "$directory" ]]; then
   rm -rf ${directory}_backup
   mv $directory ${directory}_backup
 fi
@@ -15,7 +16,7 @@ mkdir -p $argDir
 ./crawler arg1 arg2 arg3 arg4
 ./crawler arg
 
-# bad seedURL
+# invalid seedURL
 ./crawler asdf.fdsa.com $argDir 1
 # external seedURL
 ./crawler http://www.4399.com/ $argDir 1
@@ -31,7 +32,7 @@ mkdir -p $argDir
 ./crawler http://cs50tse.cs.dartmouth.edu/tse/letters/ $argDir -1
 
 
-# -----Valgrind test-----
+# -----Valgrind tests-----
 # valgrindDir="../data/valgrind"
 # mkdir -p $valgrindDir
 # valgrind --leak-check=full --show-leak-kinds=all ./crawler http://cs50tse.cs.dartmouth.edu/tse/toscrape/ $valgrindDir 1

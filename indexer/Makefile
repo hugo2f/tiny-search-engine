@@ -6,7 +6,7 @@
 C = ../common
 L = ../libcs50
 CC = gcc
-CFLAGS = -Wall -pedantic -std=c11 -ggdb -I$L -I../common $(LOGGING)
+CFLAGS = -Wall -pedantic -std=c11 -ggdb -I$C -I$L $(LOGGING)
 VALGRIND = valgrind --leak-check=full --show-leak-kinds=all
 # uncomment to turn on indexer logging
 # LOGGING = -DLOG
@@ -14,7 +14,7 @@ VALGRIND = valgrind --leak-check=full --show-leak-kinds=all
 # program specific
 OBJS = indexer.o indextest.o
 LIBS =
-LLIBS = $L/libcs50.a $C/common.a
+LLIBS = $C/common.a $L/libcs50.a
 
 .PHONY:	all clean test
 
@@ -25,16 +25,18 @@ all: indexer indextest
 indexer: indexer.o $(LLIBS)
 	$(CC) $(CFLAGS) $^ $(LIBS) -o $@
 
-indextest: $(OBJS) $(LLIBS)
+indextest: indextest.o $(LLIBS)
 	$(CC) $(CFLAGS) $^ $(LIBS) -o $@
 
 # object files also depend on include files TODO
-indexer.o: $L/hashtable.h $L/set.h $C/pagedir.h $C/print.h $C/index.h
+indexer.o: $C/index.h $L/hashtable.h $L/set.h $C/pagedir.h $C/print.h
+indextest.o: $C/index.h $C/pagedir.h
 
-test: indextest testing.sh
+test: indexer indextest testing.sh
 	bash -v ./testing.sh
 
 clean:
 	rm -f indexer indextest
+	rm -rf ../indexes
 	rm -f *~ *.o
 	rm -rf *.dSYM

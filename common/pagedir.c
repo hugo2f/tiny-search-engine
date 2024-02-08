@@ -117,21 +117,32 @@ webpage_t* pagedir_loadPageFromFile(const char* pageDirectory, const int docID)
 
   // read url, depth, html
   char* url = file_readLine(fp);
-  if (url == NULL) {
-    return NULL;
-  }
-  char* buffer = file_readLine(fp);
-  if (buffer == NULL) {
+  char* depthString = file_readLine(fp);
+  char* html = file_readFile(fp);
+  // if one of the lines couldn't be read, free what's read and return
+  if (url == NULL || depthString == NULL || html == NULL) {
+    if (url != NULL) {
+      free(url);
+    }
+    if (depthString != NULL) {
+      free(depthString);
+    }
+    if (html != NULL) {
+      free(html);
+    }
+    fclose(fp);
     return NULL;
   }
   int depth;
-  if ((str2int(buffer, &depth)) == false) {
+  // can't convert (depth line doesn't contain exactly one integer)
+  if (!(str2int(depthString, &depth))) {
+    free(url);
+    free(depthString);
+    free(html);
+    fclose(fp);
     return NULL;
   }
-  char* html = file_readLine(fp);
-  if (html == NULL) {
-    return NULL;
-  }
+  free(depthString);
 
   // create page from file contents
   webpage_t* page = webpage_new(url, depth, html);
@@ -179,7 +190,6 @@ bool pagedir_isCrawlerDirectory(char* pageDirectory)
     sprintf(crawlerPath, "%s%s", pageDirectory, "/.crawler");
   }
   if (access(crawlerPath, F_OK) == -1) {
-    fprintf(stderr, "Cannot find .crawler at %s\n", crawlerPath);
     return false;
   }
   return true;
@@ -187,10 +197,11 @@ bool pagedir_isCrawlerDirectory(char* pageDirectory)
 
 bool pagedir_isPathWriteable(char* filePath)
 {
-  if (filePath == NULL || access(filePath, F_OK) == -1) {
+  if (filePath == NULL) {
     return false;
   }
   FILE* fp = fopen(filePath, "w");
+
   if (fp == NULL) {
     return false;
   }

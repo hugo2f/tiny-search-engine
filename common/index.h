@@ -63,7 +63,7 @@ void index_addWord(index_t* idx, char* word, const int docID);
  * If the file doesn't follow the format written by index_saveToFile(),
  * the contents of the returned index will be undetermined
  */
-index_t* index_readFile(const char* filePath);
+index_t* index_readIndexFile(const char* filePath);
 
 /*
  * Write an index's contents into a file

@@ -58,6 +58,8 @@ bool pagedir_save(const webpage_t* page, const char* pageDirectory, const int do
  *   webpage_t* containing file contents if success
  *   NULL if any error occurs:
  *     pageDirectory is NULL or invalid, page is NULL, docID <= 0, file read failure
+ * 
+ * Caller needs to call webpage_delete() on the webpage_t* returned
  */
 webpage_t* pagedir_loadPageFromFile(const char* pageDirectory, const int docID);
 

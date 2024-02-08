@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <ctype.h>
 
 // contained in libcs50.a
 #include "hashtable.h"
@@ -77,7 +78,7 @@ void index_addWord(index_t* idx, char* word, const int docID)
   counters_add(counter, docID); // `word` appeared in docID once more
 }
 
-index_t* index_readFile(const char* filePath)
+index_t* index_readIndexFile(const char* filePath)
 {
   if (filePath == NULL) {
     return NULL;
@@ -94,43 +95,31 @@ index_t* index_readFile(const char* filePath)
     return NULL;
   }
 
-  char* word;
-  // read word, then read (docID, count) pairs until newline
-  // (file_readWord returns empty string if newline)
-  while ((word = file_readWord(fp)) != NULL) {
-    while (true) {
-      // try to read (docID, count) pair using two file_readWord()s
-      // if first file_readWord() returns empty string, reached
-      // end of line and go to next line
-      char* buffer = file_readWord(fp);
-      if (buffer == NULL || buffer[0] == '\0') {
-        break;
-      }
-
+  char* line;
+  while ((line = file_readLine(fp)) != NULL) {
+    // tokenize string: first token is the word,
+    // followed by (docID, count) pairs
+    char* token = strtok(line, " ");
+    char* word = token;
+    while (token != NULL) {
+      // if unable to read a pair of ints, file is formatted incorrectly
       int docID, count;
-      // read docID
-      if (!str2int(buffer, &docID)) {
+      token = strtok(NULL, " ");
+      if (!str2int(token, &docID)) {
+        free(line);
+        fclose(fp);
         return NULL;
       }
-      free(buffer);
-
-      // read count
-      buffer = file_readWord(fp);
-      // if read docID but can't read count, file has wrong format
-      if (buffer == NULL || buffer[0] == '\0') {
+      token = strtok(NULL, " ");
+      if (!str2int(token, &count)) {
+        free(line);
+        fclose(fp);
         return NULL;
       }
-      if (!str2int(buffer, &count)) {
-        return NULL;
-      }
-      free(buffer);
-
-      // update index with word, docID and count
       index_setWordDocCount(idx, word, docID, count);
     }
-    free(word);
+    free(line);
   }
-
   fclose(fp);
   return idx;
 }
@@ -244,7 +233,7 @@ void saveHashTableEntry(void* arg, const char* key, void* item)
   if (ftell(fp) != 0) {
     fputc('\n', fp);
   }
-  fprintf(fp, "%s ", key);
+  fprintf(fp, "%s", key);
 
   // print (docID, count) pairs
   counters_iterate(counter, fp, saveCounterEntry);
@@ -261,5 +250,5 @@ void saveHashTableEntry(void* arg, const char* key, void* item)
 void saveCounterEntry(void* arg, const int key, const int count)
 {
   FILE* fp = arg;
-  fprintf(fp, "%d %d", key, count);
+  fprintf(fp, " %d %d", key, count);
 }

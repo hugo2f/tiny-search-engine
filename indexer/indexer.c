@@ -10,12 +10,13 @@
  * where each (docID, count) pair corresponds to a page that
  * contains `word`
  * 
- * Usage: indexer pageDirectory indexFilename
+ * Usage: ./indexer pageDirectory indexFilename
  * 
  * Exits with:
+ *   0 if normal return
  *   errno 1 if error parsing arguments: pageDirectory doesn't exist
- *   or doesn't contain ".crawler", failure to write to indexFilename,
- *   or failure to create a file at the path indexFilename 
+ *     or doesn't contain ".crawler", failure to write to indexFilename,
+ *     or failure to create a file at the path indexFilename 
  */
 
 #include <stdio.h>
@@ -31,11 +32,10 @@
 #include "print.h"
 #include "index.h"
 
-
+/* Private functions */
 static void parseArgs(const int argc, char* argv[],
                       char** pageDirectory_p, char** indexFilename_p);
-// static bool str2int(const char string[], int* num_p);
-static void indexBuild(const char* pageDirectory);
+index_t* indexBuild(const char* pageDirectory);
 static void indexPage(index_t* idx, webpage_t* page, const int docID);
 
 int main(const int argc, char* argv[])
@@ -43,7 +43,9 @@ int main(const int argc, char* argv[])
   char* pageDirectory = NULL;
   char* indexFilename = NULL;
   parseArgs(argc, argv, &pageDirectory, &indexFilename);
-  indexBuild(pageDirectory);
+  index_t* idx = indexBuild(pageDirectory);
+  index_saveToFile(idx, indexFilename);
+  index_delete(idx);
   return 0;
 }
 
@@ -82,8 +84,13 @@ static void parseArgs(const int argc, char* argv[],
  *
  * Inputs:
  *   pageDirectory: directory to read files from
+ * 
+ * Returns:
+ *   the index
+ * 
+ * Caller needs to call index_delete() on the returned index
  */
-void indexBuild(const char* pageDirectory)
+index_t* indexBuild(const char* pageDirectory)
 {
   index_t* idx = index_new();
   int docID = 1;
@@ -91,11 +98,13 @@ void indexBuild(const char* pageDirectory)
     webpage_t* page = pagedir_loadPageFromFile(pageDirectory, docID);
     // page doesn't exist, read all files
     if (page == NULL) {
-      return;
+      break;
     }
     indexPage(idx, page, docID);
+    webpage_delete(page);
     docID++;
   }
+  return idx;
 }
 
 /*
