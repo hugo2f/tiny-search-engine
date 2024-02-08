@@ -95,7 +95,7 @@ index_t* indexBuild(const char* pageDirectory)
   index_t* idx = index_new();
   int docID = 1;
   webpage_t* page;
-  while (page = pagedir_loadPageFromFile(pageDirectory, docID) != NULL) {
+  while ((page = pagedir_loadPageFromFile(pageDirectory, docID)) != NULL) {
     indexPage(idx, page, docID);
     webpage_delete(page);
     docID++;
