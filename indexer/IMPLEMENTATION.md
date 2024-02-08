@@ -158,5 +158,59 @@ The indexer uses the `hashtable`, `counters`, and `webpage` modules in libcs50. 
 
 ## Function prototypes
 
+### indexer
+Refer to `indexer.c` for more details regarding each function.
+
+```c
+int main(const int argc, char* argv[]);
+static void parseArgs(const int argc, char* argv[],
+                      char** pageDirectory_p, char** indexFilename_p);
+index_t* indexBuild(const char* pageDirectory);
+static void indexPage(index_t* idx, webpage_t* page, const int docID);
+```
+
+### pagedir
+Refer to `pagedir.h` for details.
+
+```c
+webpage_t* pagedir_loadPageFromFile(const char* pageDirectory, const int docID);
+bool pagedir_isCrawlerDirectory(char* pageDirectory);
+bool pagedir_isFileWriteable(char* filePath);
+```
+
+### index
+Refer to `index.h` for details.
+```c
+index_t* index_new();
+void index_delete(index_t* idx);
+void index_addWord(index_t* idx, char* word, const int docID);
+index_t* index_readIndexFile(const char* filePath);
+void index_saveToFile(index_t* idx, const char* filePath);
+
+```
+
+### word
+Refer to `word.h` for details.
+```c
+char* normalizeWord(char* word);
+```
+
+## Error handling and recovery
+
+Command line arguments are checked by `parseArgs` before the indexer processes any pages. Any errors will be printed to stderr and the indexer exits with non-zero status.
+
+All functions will check for NULL pointers before executing. If there is not enough memory to initiate a new index, the indexer will exit normally without doing anything. When indexing a page, the indexer will skip the current page on memory allocation failures or formatting errors in the file.
 
 ## Testing plan
+
+### Regression testing
+`testing.sh` will save the indexes produced in the `indexes` directory, and will create a backup if such a directory already exists. This allows comparison between the results produced from different runs
+
+### System testing
+`testing.sh` will first test `indexer` with invalid arguments, including:
+* invalid numbers of arguments
+* nonexistent/invalid (non-crawler) `pageDirectory`
+* nonexistent `indexFile`
+* `indexFile` is in read-only directory, or is a read-only file
+
+It then runs `indexer` on different valid `pageDirectories`, and uses `indextest` to check if `index.c` properly handles writing to and reading from index files. These tests are run with `valgrind` to ensure there are no memory leaks or errors.

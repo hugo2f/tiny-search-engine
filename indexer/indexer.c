@@ -93,6 +93,9 @@ static void parseArgs(const int argc, char* argv[],
 index_t* indexBuild(const char* pageDirectory)
 {
   index_t* idx = index_new();
+  if (idx == NULL) {
+    return NULL;
+  }
   int docID = 1;
   webpage_t* page;
   while ((page = pagedir_loadPageFromFile(pageDirectory, docID)) != NULL) {

@@ -45,6 +45,9 @@ index_t* index_new()
 
 void index_delete(index_t* idx)
 {
+  if (idx == NULL) {
+    return;
+  }
   // each item in the hashtable is a counter
   hashtable_delete(idx->ht, counterDelete);
   free(idx);
@@ -198,7 +201,7 @@ void index_setWordDocCount(index_t* idx, const char* word,
 
 void index_saveToFile(index_t* idx, const char* filePath)
 {
-  if (filePath == NULL) {
+  if (idx == NULL || filePath == NULL) {
     return;
   }
   FILE* fp = fopen(filePath, "w");
