@@ -1,2 +1,3 @@
-indexFilename: error if not writeable or can't create file at path,
-will overwrite if previously had content 
+## Notes and assumptions
+
+`indexFilename` will be overwritten if it is an existing, writeable file. For other situations, see the [implementation spec](IMPLEMENTATION.md)
