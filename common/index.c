@@ -219,8 +219,6 @@ void index_saveToFile(index_t* idx, const char* filePath)
  * Internal function to save the counters in a hashtable entry.
  * Print the word, then iterate through the counter in that entry
  * to print the (docID, count) pairs, and finish with newline
- * 
- * TODO: is it ok to have extra newline at the bottom
  *
  * Inputs:
  *   arg: index_saveToFile() will pass in FILE* fp to write to
@@ -232,7 +230,6 @@ void saveHashtableEntry(void* arg, const char* key, void* item)
   FILE* fp = arg;
   counters_t* counter = item;
   // print the word, start a newline if not at the beginning of the file
-  // TODO: test if this will have no extra newlines
   if (ftell(fp) != 0) {
     fputc('\n', fp);
   }

@@ -22,11 +22,13 @@ tseDir="$HOME/cs50-dev/shared/tse"
 
 # indexFilename is in readonly directory
 mkdir ./readOnlyDir
+touch ./readOnlyDir/asdf.index
 chmod a=r ./readOnlyDir
-./indexer $tseDir/output/letters-0 ./readOnlyDir
+./indexer $tseDir/output/letters-0 ./readOnlyDir/asdf.index
+chmod a=wrx ./readOnlyDir
 rm -rf ./readOnlyDir
 
-# indexFilename is readonly TODO: try directories with and without slash
+# indexFilename is readonly
 touch ./readOnlyFile
 chmod a=r ./readOnlyFile
 ./indexer $tseDir/output/letters-0 ./readOnlyFile

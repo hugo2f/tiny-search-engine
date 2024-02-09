@@ -28,7 +28,7 @@ indexer: indexer.o $(LLIBS)
 indextest: indextest.o $(LLIBS)
 	$(CC) $(CFLAGS) $^ $(LIBS) -o $@
 
-# object files also depend on include files TODO
+# object files also depend on include files
 indexer.o: $C/index.h $L/hashtable.h $L/set.h $C/pagedir.h $C/print.h
 indextest.o: $C/index.h $C/pagedir.h
 
