@@ -6,10 +6,8 @@
 C = ../common
 L = ../libcs50
 CC = gcc
-CFLAGS = -Wall -pedantic -std=c11 -ggdb -I$C -I$L $(LOGGING)
+CFLAGS = -Wall -pedantic -std=c11 -ggdb -I$C -I$L
 VALGRIND = valgrind --leak-check=full --show-leak-kinds=all
-# uncomment to turn on indexer logging
-# LOGGING = -DLOG
 
 # program specific
 OBJS = indexer.o indextest.o
