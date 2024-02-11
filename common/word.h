@@ -8,8 +8,10 @@
 
 #ifndef __WORD_H__
 #define __WORD_H__
+
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 /*
  * Normalizes a word by turning all characters to lower case, in-place.
@@ -19,5 +21,32 @@
  *   word to normalize
  */
 char* normalizeWord(char* word);
+
+/*
+ * Checks if a string contains only characters that satisfy
+ * isalpha() and isspace()
+ * 
+ * Input:
+ *   string to check
+ * 
+ * Returns:
+ *   the first non-alphabet, non-space character
+ */
+char onlyAlphaSpaces(char* string);
+
+/*
+ * Given a string of space-separated words, get the next word (could be empty).
+ * The string is modified in place to insert a '\0' after the word,
+ * and pos is updated to be the index after the '\0'.
+ * 
+ * Input:
+ *   string to read from
+ *   pos: current index in string
+ * 
+ * Returns:
+ *   pointer to the next word
+ *   NULL if pos is at the end of the string
+ */
+char* nextWord(char* string, int* pos);
 
 #endif // __WORD_H__

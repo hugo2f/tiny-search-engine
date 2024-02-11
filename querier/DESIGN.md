@@ -2,7 +2,7 @@
 
 ## Design Spec
 
-According to the requirements spec, the TSE `querier` reads in an index file produced by the TSE Indexer, the page files produced by the TSE Crawler, and answers search queriers in stdin.
+According to the requirements spec, the TSE `querier` reads in an index file produced by the TSE Indexer, the page files produced by the TSE Crawler, and answers search queries in stdin.
 
 
 ### User interface
@@ -43,9 +43,9 @@ And some helper modules:
 The querier will run as follows:
 ```
 parse the command line, validate arguments, initialize other modules
-call parseQuery on each line from stdin
+call processQuery on each line from stdin
 ```
-where `parseQuery`:
+where `processQuery`:
 ```
 verifies the query format
 builds the list of search results for the query

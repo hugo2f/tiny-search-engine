@@ -78,8 +78,7 @@ bool pagedir_isCrawlerDirectory(char* pageDirectory);
 
 /*
  * Checks if a path points to a writeable file, or if the path is
- * in an existent directory that allows creation of the file.
- * File contents will be cleared if it exists and writeable
+ * in an writeable directory that allows creation of the file.
  * 
  * Input:
  *   filePath: path to file
@@ -89,5 +88,17 @@ bool pagedir_isCrawlerDirectory(char* pageDirectory);
  *   false if failure to create file at filePath
  */
 bool pagedir_isFileWriteable(char* filePath);
+
+/*
+ * Checks if a path points to a existing, readable file
+ * 
+ * Input:
+ *   filePath: path to file
+ *   
+ * Returns:
+ *   true if readable
+ *   false otherwise
+ */
+bool pagedir_isFileReadable(char* filePath);
 
 #endif // __PAGEDIR_H__

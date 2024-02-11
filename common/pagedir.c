@@ -197,14 +197,20 @@ bool pagedir_isCrawlerDirectory(char* pageDirectory)
 
 bool pagedir_isFileWriteable(char* filePath)
 {
-  if (filePath == NULL) {
-    return false;
-  }
-  FILE* fp = fopen(filePath, "w");
+  // if (filePath == NULL) {
+  //   return false;
+  // }
+  return (filePath != NULL && access(filePath, W_OK) == 0);
+  // FILE* fp = fopen(filePath, "w");
 
-  if (fp == NULL) {
-    return false;
-  }
-  fclose(fp);
-  return true;
+  // if (fp == NULL) {
+  //   return false;
+  // }
+  // fclose(fp);
+  // return true;
+}
+
+bool pagedir_isFileReadable(char* filePath)
+{
+  return (filePath != NULL && access(filePath, R_OK) == 0); 
 }
