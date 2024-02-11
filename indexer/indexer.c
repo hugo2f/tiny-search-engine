@@ -25,7 +25,6 @@
 
 // libcs50.a
 #include "hashtable.h"
-#include "set.h"
 
 // common.a
 #include "pagedir.h"
