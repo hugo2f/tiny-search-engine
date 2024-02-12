@@ -154,7 +154,7 @@ void prompt()
  */
 void processQuery(const index_t* idx, char* query, const char* pageDirectory)
 {
-  stripAndCompactSpaces(query);
+  stripCompactNormalize(query);
   printf("Query: %s\n", query); // echo pre-processed query
 
   // empty or invalid query
@@ -337,8 +337,8 @@ void addIntoArray(void* arg, const int key, const int count)
  */
 int compareQueryResult(const void* a, const void* b)
 {
-  queryResult_t* ptrA = (queryResult_t*) a;
-  queryResult_t* ptrB = (queryResult_t*) b;
+  queryResult_t* ptrA = *(queryResult_t**) a;
+  queryResult_t* ptrB = *(queryResult_t**) b;
   return ptrB->score - ptrA->score;
 }
 

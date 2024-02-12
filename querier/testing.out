@@ -1,0 +1,329 @@
+bash -v ./testing.sh
+module () {  _module_raw "$@" 2>&1
+}
+ml () {  module ml "$@"
+}
+_module_raw () {  eval `/usr/bin/tclsh8.6 /usr/lib/x86_64-linux-gnu/modulecmd.tcl bash "$@"`;
+ _mlstatus=$?;
+ return $_mlstatus
+}
+#!/bin/bash
+# testing script for querier
+
+# directory with tse data and sample outputs
+tseDir="$HOME/cs50-dev/shared/tse/output"
+
+
+# -----Invalid arguments-----
+# number of arguments
+./querier
+Usage: ./querier pageDirectory indexFilename
+./querier arg1 arg2 arg3
+Usage: ./querier pageDirectory indexFilename
+./querier too many arguments provided
+Usage: ./querier pageDirectory indexFilename
+
+# nonexistent pageDirectory
+./indexer ./nonexistent ./index
+./testing.sh: line 15: ./indexer: No such file or directory
+
+# non-crawler pageDirectory
+./querier ./ ./index
+Querier: pageDirectory doesn't exist or doesn't contain ".crawler"
+
+# invalid indexFilename
+./querier $tseDir/letters-0 ./nonexistent/asdf.index
+Querier: failed to read ./nonexistent/asdf.index
+
+# indexFilename is in readonly directory
+mkdir ./readOnlyDir
+touch ./readOnlyDir/asdf.index
+chmod a=r ./readOnlyDir
+./querier $tseDir/letters-0 ./readOnlyDir/asdf.index
+Querier: failed to read ./readOnlyDir/asdf.index
+chmod a=wrx ./readOnlyDir
+rm -rf ./readOnlyDir
+
+# -----System & Valgrind tests-----
+# invalid.txt contains the following invalid queries:
+#   1. starting "and"
+#   2. starting "or"
+#   3. ending "and"
+#   4. ending "or"
+#   5. consecutive "and"
+#   6. consecutive "or"
+#   7. adjacent "and"/"or"
+#   8. non-alphabet, non-space characters
+myvalgrind="valgrind --leak-check=full --show-leak-kinds=all"
+$myvalgrind cat invalid.txt | ./querier $tseDir/letters-0 $tseDir/letters-0.index
+==3597932== Memcheck, a memory error detector
+==3597932== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==3597932== Using Valgrind-3.18.1 and LibVEX; rerun with -h for copyright info
+==3597932== Command: cat invalid.txt
+==3597932== 
+Error: query cannot start with 'and'/'or'
+Error: query cannot start with 'and'/'or'
+Error: query cannot start with 'and'/'or'
+Error: query cannot start with 'and'/'or'
+Error: query cannot end with 'and'/'or'
+Error: query cannot end with 'and'/'or'
+Error: query cannot contain consecutive 'and'/'or'
+Error: query cannot contain consecutive 'and'/'or'
+Error: query cannot contain consecutive 'and'/'or'
+Error: query cannot contain consecutive 'and'/'or'
+Error: query cannot contain consecutive 'and'/'or'
+Error: query cannot contain consecutive 'and'/'or'
+Error: bad character '!' in query
+Error: bad character '(' in query
+Error: bad character '@' in query
+Query: and
+-----------------------------------------------
+Query: and word another word
+-----------------------------------------------
+Query: or
+-----------------------------------------------
+Query: or word another word
+-----------------------------------------------
+Query: word another word and
+-----------------------------------------------
+Query: word another word or
+-----------------------------------------------
+Query: hello and and world
+-----------------------------------------------
+Query: tse playground and and travel
+-----------------------------------------------
+Query: hello or or world
+-----------------------------------------------
+Query: tse playground or or travel
+-----------------------------------------------
+Query: philosophy and or computer
+-----------------------------------------------
+Query: business or default or and romance
+-----------------------------------------------
+Query: word!!
+-----------------------------------------------
+Query: hello () world -_-
+-----------------------------------------------
+Query: query with inv@lid characters
+-----------------------------------------------
+==3597932== 
+==3597932== HEAP SUMMARY:
+==3597932==     in use at exit: 0 bytes in 0 blocks
+==3597932==   total heap usage: 3 allocs, 3 frees, 1,052,715 bytes allocated
+==3597932== 
+==3597932== All heap blocks were freed -- no leaks are possible
+==3597932== 
+==3597932== For lists of detected and suppressed errors, rerun with: -s
+==3597932== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+
+# directories to tse output
+letters2="${tseDir}/letters-2"
+toscrape2="${tseDir}/toscrape-2"
+wikipedia2="${tseDir}/wikipedia-2"
+echo $letters2
+/thayerfs/home/f005cqh/cs50-dev/shared/tse/output/letters-2
+echo $toscrape2
+/thayerfs/home/f005cqh/cs50-dev/shared/tse/output/toscrape-2
+echo $wikipedia2
+/thayerfs/home/f005cqh/cs50-dev/shared/tse/output/wikipedia-2
+
+# tests below have long output
+$myvalgrind ./fuzzquery "${letters2}.index" 10 0 | ./querier $letters2 "${letters2}.index"
+==3597934== Memcheck, a memory error detector
+==3597934== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==3597934== Using Valgrind-3.18.1 and LibVEX; rerun with -h for copyright info
+==3597934== Command: ./fuzzquery /thayerfs/home/f005cqh/cs50-dev/shared/tse/output/letters-2.index 10 0
+==3597934== 
+./fuzzquery: generating 10 queries from 11 words
+==3597934== 
+==3597934== HEAP SUMMARY:
+==3597934==     in use at exit: 0 bytes in 0 blocks
+==3597934==   total heap usage: 104,356 allocs, 104,356 frees, 9,304,227 bytes allocated
+==3597934== 
+==3597934== All heap blocks were freed -- no leaks are possible
+==3597934== 
+==3597934== For lists of detected and suppressed errors, rerun with: -s
+==3597934== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+Query: breadth and the 
+No documents match
+-----------------------------------------------
+Query: home or tse tse or algorithm algorithm 
+Matches 3 documents (ranked):
+score	3 doc   1: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+score	2 doc   2: http://cs50tse.cs.dartmouth.edu/tse/letters/A.html
+score	1 doc   3: http://cs50tse.cs.dartmouth.edu/tse/letters/B.html
+-----------------------------------------------
+Query: playground playground or algorithm 
+Matches 2 documents (ranked):
+score	1 doc   1: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+score	1 doc   2: http://cs50tse.cs.dartmouth.edu/tse/letters/A.html
+-----------------------------------------------
+Query: endlessly search this or algorithm or curdled or search 
+Matches 2 documents (ranked):
+score	1 doc   2: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+score	1 doc   3: http://cs50tse.cs.dartmouth.edu/tse/letters/A.html
+-----------------------------------------------
+Query: first or this breadth tse and the or search 
+Matches 1 document:
+score	2 doc   3: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+-----------------------------------------------
+Query: the algorithm playground this or tse 
+Matches 1 document:
+score	1 doc   1: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+-----------------------------------------------
+Query: search 
+Matches 1 document:
+score	1 doc   3: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+-----------------------------------------------
+Query: this tse or search 
+Matches 2 documents (ranked):
+score	1 doc   1: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+score	1 doc   3: http://cs50tse.cs.dartmouth.edu/tse/letters/A.html
+-----------------------------------------------
+Query: the 
+Matches 1 document:
+score	1 doc   1: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+-----------------------------------------------
+Query: for or home or for and tse and for 
+Matches 3 documents (ranked):
+score	4 doc   1: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+score	2 doc   2: http://cs50tse.cs.dartmouth.edu/tse/letters/A.html
+score	2 doc   3: http://cs50tse.cs.dartmouth.edu/tse/letters/B.html
+-----------------------------------------------
+$myvalgrind ./fuzzquery "${toscrape2}.index" 10 0 | ./querier $toscrape2 "${toscrape2}.index"
+==3597967== Memcheck, a memory error detector
+==3597967== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==3597967== Using Valgrind-3.18.1 and LibVEX; rerun with -h for copyright info
+==3597967== Command: ./fuzzquery /thayerfs/home/f005cqh/cs50-dev/shared/tse/output/toscrape-2.index 10 0
+==3597967== 
+./fuzzquery: generating 10 queries from 13563 words
+==3597967== 
+==3597967== HEAP SUMMARY:
+==3597967==     in use at exit: 0 bytes in 0 blocks
+==3597967==   total heap usage: 446,435 allocs, 446,435 frees, 372,214,605 bytes allocated
+==3597967== 
+==3597967== All heap blocks were freed -- no leaks are possible
+==3597967== 
+==3597967== For lists of detected and suppressed errors, rerun with: -s
+==3597967== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+Query: inthe and quarters 
+No documents match
+-----------------------------------------------
+Query: hangs or visited kahneman or beneath shopping 
+Matches 3 documents (ranked):
+score	1 doc 171: http://cs50tse.cs.dartmouth.edu/tse/toscrape/index.html
+score	1 doc 536: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/page-2.html
+score	1 doc 569: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/page-3.html
+-----------------------------------------------
+Query: nationally holery or predicts 
+Matches 1 document:
+score	1 doc 246: http://cs50tse.cs.dartmouth.edu/tse/toscrape/index.html
+-----------------------------------------------
+Query: endlessly axell conduct or christine or curdled or sorbonne 
+Matches 2 documents (ranked):
+score	2 doc 357: http://cs50tse.cs.dartmouth.edu/tse/toscrape/index.html
+score	1 doc 367: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/page-2.html
+-----------------------------------------------
+Query: endowment or cosmic lover sketchbook and priest or bfed 
+Matches 2 documents (ranked):
+score	1 doc  28: http://cs50tse.cs.dartmouth.edu/tse/toscrape/index.html
+score	1 doc  20: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/page-2.html
+-----------------------------------------------
+Query: orientation iceland describe worse or defeating 
+Matches 1 document:
+score	2 doc 499: http://cs50tse.cs.dartmouth.edu/tse/toscrape/index.html
+-----------------------------------------------
+Query: clerks 
+Matches 1 document:
+score	1 doc 157: http://cs50tse.cs.dartmouth.edu/tse/toscrape/index.html
+-----------------------------------------------
+Query: arnold streusel or braved 
+Matches 1 document:
+score	1 doc 150: http://cs50tse.cs.dartmouth.edu/tse/toscrape/index.html
+-----------------------------------------------
+Query: multiplatform 
+Matches 1 document:
+score	1 doc 204: http://cs50tse.cs.dartmouth.edu/tse/toscrape/index.html
+-----------------------------------------------
+Query: patience or nightstruck or bowerbird and antoinette and stances 
+Matches 9 documents (ranked):
+score	5 doc 524: http://cs50tse.cs.dartmouth.edu/tse/toscrape/index.html
+score	1 doc 511: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/page-2.html
+score	1 doc 518: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/page-3.html
+score	1 doc 519: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/page-1.html
+score	1 doc 520: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/you-cant-bury-them-all-poems_961/index.html
+score	1 doc 521: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/behind-closed-doors_962/index.html
+score	1 doc 522: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/in-a-dark-dark-wood_963/index.html
+score	1 doc 523: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/maude-1883-1993she-grew-up-with-the-country_964/index.html
+score	1 doc 255: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/penny-maybe_965/index.html
+-----------------------------------------------
+$myvalgrind ./fuzzquery "${wikipedia2}.index" 10 0 | ./querier $wikipedia2 "${wikipedia2}.index"
+==3597999== Memcheck, a memory error detector
+==3597999== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==3597999== Using Valgrind-3.18.1 and LibVEX; rerun with -h for copyright info
+==3597999== Command: ./fuzzquery /thayerfs/home/f005cqh/cs50-dev/shared/tse/output/wikipedia-2.index 10 0
+==3597999== 
+./fuzzquery: generating 10 queries from 27847 words
+==3597999== 
+==3597999== HEAP SUMMARY:
+==3597999==     in use at exit: 0 bytes in 0 blocks
+==3597999==   total heap usage: 1,098,888 allocs, 1,098,888 frees, 546,194,128 bytes allocated
+==3597999== 
+==3597999== All heap blocks were freed -- no leaks are possible
+==3597999== 
+==3597999== For lists of detected and suppressed errors, rerun with: -s
+==3597999== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+Query: bushy and daemontools 
+No documents match
+-----------------------------------------------
+Query: ninja or conference vefp or alignment correction 
+Matches 2 documents (ranked):
+score	3 doc 233: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/
+score	1 doc 156: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/Linked_list.html
+-----------------------------------------------
+Query: enotifrevealaddr madam or versailles 
+Matches 2 documents (ranked):
+score	1 doc 163: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/
+score	1 doc 112: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/Linked_list.html
+-----------------------------------------------
+Query: endlessly tso billion or whatever or curdled or inadvertently 
+Matches 6 documents (ranked):
+score	2 doc 149: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/
+score	1 doc  56: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/Linked_list.html
+score	1 doc  92: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/Main_Page.html
+score	1 doc 140: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/Directed_acyclic_word_graph.html
+score	1 doc 135: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/Binary_decision_diagram.html
+score	1 doc 163: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/Graph_(abstract_data_type).html
+-----------------------------------------------
+Query: leonidas or sapi presidents libawka and atlantis or stoica 
+Matches 5 documents (ranked):
+score	2 doc  17: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/
+score	2 doc  80: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/Linked_list.html
+score	1 doc  38: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/Main_Page.html
+score	1 doc  68: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/Directed_acyclic_word_graph.html
+score	1 doc 138: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/Binary_decision_diagram.html
+-----------------------------------------------
+Query: interfacing mdgs primitives attaining or grafton 
+Matches 3 documents (ranked):
+score	2 doc 212: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/
+score	2 doc 213: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/Linked_list.html
+score	2 doc 225: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/Main_Page.html
+-----------------------------------------------
+Query: institutionalism 
+Matches 1 document:
+score	1 doc 117: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/
+-----------------------------------------------
+Query: cosmopolitanism limburgs or decb 
+Matches 1 document:
+score	2 doc 102: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/
+-----------------------------------------------
+Query: bohm 
+Matches 1 document:
+score	1 doc 109: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/
+-----------------------------------------------
+Query: akamai or sheaf or bauer and beginner and supplements 
+Matches 2 documents (ranked):
+score	1 doc  43: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/
+score	1 doc 221: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/Linked_list.html
+-----------------------------------------------
+# $myvalgrind cat testing.txt | ./querier $tseDir/wikipedia-2 $tseDir/wikipedia-2.index

@@ -17,20 +17,25 @@ LLIBS = $C/common.a $L/libcs50.a
 .PHONY:	all clean test
 
 # default executable to build
-all: querier
+all: querier fuzzquery
 
 # executables
-querier: $(OBJS) $(LLIBS)
+querier: querier.o $(LLIBS)
+	$(CC) $(CFLAGS) $^ $(LIBS) -o $@
+
+fuzzquery: fuzzquery.o $(LLIBS)
 	$(CC) $(CFLAGS) $^ $(LIBS) -o $@
 
 # object files also depend on include files
 querier.o: $L/hashtable.h $L/counters.h $L/file.h\
 $C/pagedir.h $C/print.h $C/index.h $C/word.h $C/pagedir.h
 
-test: querier testing.sh
+fuzzquery.o: $L/mem.h $L/file.h
+
+test: querier fuzzquery testing.sh
 	bash -v ./testing.sh
 
 clean:
-	rm -f querier
+	rm -f querier fuzzquery
 	rm -f *~ *.o
 	rm -rf *.dSYM

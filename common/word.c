@@ -21,7 +21,7 @@ void normalizeWord(char* word)
   }
 }
 
-char* stripAndCompactSpaces(char* string)
+char* stripCompactNormalize(char* string)
 {
 
   char* src = string; // used to loop through the original string
@@ -53,8 +53,8 @@ char* stripAndCompactSpaces(char* string)
     src++;
   }
   *res = '\0';
+  normalizeWord(toReturn);
   return toReturn;
-  // printf("%s\n", string);
 }
 
 char onlyAlphaSpaces(char* string)
@@ -91,6 +91,5 @@ char* nextWord(char* string, int* pos)
     string[*pos] = '\0';
     (*pos)++;
   }
-  normalizeWord(&string[start]);
   return &string[start];
 }

@@ -24,7 +24,7 @@ char* normalizeWord(char* word);
 
 /*
  * Strips leading and trailing spaces, replaces consecutive spaces and tabs
- * with a single space.
+ * with a single space, then normalizes the string.
  * 
  * Input:
  *   string to strip
@@ -35,7 +35,7 @@ char* normalizeWord(char* word);
  * 
  * Caller needs to free() the original string
  */
-char* stripAndCompactSpaces(char* string);
+char* stripCompactNormalize(char* string);
 
 /*
  * Checks if a string contains only characters that satisfy
