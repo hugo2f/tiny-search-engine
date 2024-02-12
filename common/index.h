@@ -12,10 +12,18 @@
 
 #ifndef __INDEX_H__
 #define __INDEX_H__
+
 #include <stdio.h>
 #include <stdlib.h>
 
+// libcs50.a
+#include "counters.h"
+
+/* Public types */
 typedef struct index index_t;
+
+/* Getters */
+counters_t* index_getWord(const index_t* idx, const char* word);
 
 /*
  * Allocate and initialize a new index_t structure

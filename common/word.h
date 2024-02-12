@@ -15,12 +15,27 @@
 
 /*
  * Normalizes a word by turning all characters to lower case, in-place.
- * Non-alphabet characters are ignored
+ * Non-alphabet characters are ignored.
  * 
  * Input:
  *   word to normalize
  */
 char* normalizeWord(char* word);
+
+/*
+ * Strips leading and trailing spaces, replaces consecutive spaces and tabs
+ * with a single space.
+ * 
+ * Input:
+ *   string to strip
+ * 
+ * Returns:
+ *   pointer to the start of the stripped string.
+ *   NULL if the string is all spaces
+ * 
+ * Caller needs to free() the original string
+ */
+char* stripAndCompactSpaces(char* string);
 
 /*
  * Checks if a string contains only characters that satisfy
@@ -36,8 +51,8 @@ char onlyAlphaSpaces(char* string);
 
 /*
  * Given a string of space-separated words, get the next word (could be empty).
- * The string is modified in place to insert a '\0' after the word,
- * and pos is updated to be the index after the '\0'.
+ * The string is modified in place to normalize the word and insert a '\0' after
+ * the word, and pos is updated to be the index after the '\0'.
  * 
  * Input:
  *   string to read from

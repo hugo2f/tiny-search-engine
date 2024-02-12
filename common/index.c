@@ -10,17 +10,20 @@
 #include <string.h>
 #include <ctype.h>
 
-// contained in libcs50.a
+// libcs50.a
 #include "hashtable.h"
 #include "counters.h"
 #include "file.h"
 
+// common.a
 #include "word.h"
 
+/* Public types */
 typedef struct index {
   // <char* word, counters_t* counter>
   hashtable_t* ht;
 } index_t;
+
 
 /* Private function prototypes */
 static void counterDelete(void *item);
@@ -30,6 +33,12 @@ static void index_setWordDocCount(index_t* idx, const char* word,
 static index_t* index_newWithNumSlots(const int numSlots);
 static void saveHashtableEntry(void* arg, const char* key, void* item);
 static void saveCounterEntry(void* arg, const int key, const int item);
+
+/* Getters */
+counters_t* index_getWord(const index_t* idx, const char* word)
+{
+  return hashtable_find(idx->ht, word);
+}
 
 /* Public functions */
 index_t* index_new()
@@ -252,3 +261,7 @@ void saveCounterEntry(void* arg, const int key, const int count)
   FILE* fp = arg;
   fprintf(fp, " %d %d", key, count);
 }
+
+/*
+ * 
+ */

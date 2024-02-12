@@ -150,6 +150,37 @@ webpage_t* pagedir_loadPageFromFile(const char* pageDirectory, const int docID)
   return page;
 }
 
+char* pagedir_loadUrlFromFile(const char* pageDirectory, const int docID)
+{
+if (pageDirectory == NULL || docID <= 0) {
+    return NULL;
+  }
+  // check validity and accessability of pageDirectory
+  if (access(pageDirectory, F_OK) == -1) {
+    return NULL;
+  }
+
+  // same logic as pagedir_save()
+  int idLength = snprintf(NULL, 0, "%d", docID);
+  size_t dirLen = strlen(pageDirectory);
+  char filePath[dirLen + idLength + 2]; // directory to target file
+  if (pageDirectory[dirLen - 1] == '/') {
+    snprintf(filePath, sizeof(filePath), "%s%d", pageDirectory, docID);
+  } else {
+    snprintf(filePath, sizeof(filePath), "%s/%d", pageDirectory, docID);
+  }
+  
+  FILE* fp = fopen(filePath, "r");
+  if (fp == NULL) {
+    return NULL;
+  }
+
+  // read url
+  char* url = file_readLine(fp);
+  fclose(fp);
+  return url;
+}
+
 /*
  * converts string to integer and stores in num_p
  * 

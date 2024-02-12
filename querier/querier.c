@@ -32,16 +32,40 @@
 #include "print.h"
 #include "index.h"
 #include "word.h"
+#include "pagedir.h"
+
+/* Local types */
+typedef struct queryResult {
+  // score corresponds to the count items in a counter
+  int docID, score;
+} queryResult_t;
+
+typedef struct queryResArr {
+  // internal array of queryResult_t*
+  queryResult_t** arr;
+  // next pos to insert at
+  int pos;
+} queryResArr_t;
 
 /* Private functions */
-static index_t* parseArgs(const int argc, char* argv[], char** pageDirectory_p);
 int fileno(FILE* stream);
+static index_t* parseArgs(const int argc, char* argv[], char** pageDirectory_p);
+static void queryResArr_delete(queryResArr_t* resArr);
+
+// processing queries
 static void prompt();
-static void processQuery(const index_t* idx, char* query);
+static void processQuery(const index_t* idx, char* query, const char* pageDirectory);
 static bool isValidQuery(char* query);
 static bool isAndOr(char* word);
 
-// counter related functions
+// processing results
+static queryResArr_t* getSortedResults(counters_t* res);
+static void getCounterSize(void* arg, const int key, const int count);
+static void addIntoArray(void* arg, const int key, const int count);
+static int compareQueryResult(const void* a, const void* b);
+static void outputQueryResults(const queryResArr_t* resArr, const char* pageDirectory);
+
+// combining counters
 static void intersectCounters(counters_t* from, counters_t** to_p);
 static void mergeMinCount(void* arg, const int key, const int item);
 static void setIfNonzero(void* arg, const int key, const int item);
@@ -62,9 +86,11 @@ int main(const int argc, char* argv[])
   prompt();
   char* query;
   while ((query = file_readLine(stdin)) != NULL) {
+    processQuery(idx, query, pageDirectory);
     prompt();
-    processQuery(idx, query);
+    free(query);
   }
+  index_delete(idx);
   return 0;
 }
 
@@ -114,7 +140,7 @@ static index_t* parseArgs(const int argc, char* argv[], char** pageDirectory_p)
 void prompt()
 {
   if (isatty(fileno(stdin))) {
-    printf("Query: ");
+    printf("Query? ");
   }
 }
 
@@ -126,42 +152,126 @@ void prompt()
  *   idx: index of words in `pageDirectory`
  *   query to process
  */
-void processQuery(const index_t* idx, char* query)
+void processQuery(const index_t* idx, char* query, const char* pageDirectory)
 {
+  stripAndCompactSpaces(query);
+  printf("Query: %s\n", query); // echo pre-processed query
+
   // empty or invalid query
   if (query[0] == '\0' || !isValidQuery(query)) {
+    println("-----------------------------------------------");
     return;
   }
 
+  counters_t* res = counters_new(); // final result
+  // out of memory
+  if (res == NULL) {
+    return;
+  }
+  counters_t* temp = NULL; // current and-sequence
+  int pos = 0;
+  char* word = nextWord(query, &pos);
+  while (word != NULL) {
+    // by default, reading a word will "and" it with any previous sequence
+    // if read "or", then union `temp` into `result`
+    if (!isAndOr(word)) { // read a word
+      // ignore words with length < 3
+      if (strlen(word) < 3) {
+        continue;
+      }
 
+      counters_t* counter = index_getWord(idx, word);
+      // if word isn't found, reset temp and skip this and-sequence
+      if (counter == NULL) {
+        if (temp != NULL) {
+          counters_delete(temp);
+        }
+        temp = NULL;
+        while (word != NULL && strcmp(word, "or") != 0) {
+          word = nextWord(query, &pos);
+        }
+        continue;
+      }
+
+      if (temp == NULL) { // start new and-sequence
+        temp = copyCounter(counter);
+      } else { // update current and-sequence
+        intersectCounters(counter, &temp);
+      }
+    } else if (strcmp(word, "or") == 0) { // read "or"
+      // temp could be NULL if previous and-sequence contains
+      // a nonexistent word in the index
+      if (temp != NULL) {
+        unionCounters(temp, res);
+        counters_delete(temp);
+        temp = NULL;
+      }
+    }
+    word = nextWord(query, &pos);
+  }
+
+  if (temp != NULL) {
+    unionCounters(temp, res);
+  }
+
+  queryResArr_t* resArr = getSortedResults(res);
+  if (resArr == NULL) {
+    return;
+  }
+
+  outputQueryResults(resArr, pageDirectory);
+  println("-----------------------------------------------");
+
+  // clear up memory for this query
+  counters_delete(temp);
+  counters_delete(res);
+  queryResArr_delete(resArr);
 }
 
+/*
+ * Check that a query is valid:
+ *   1. only alphabet and space characters (satisfies isalpha() and isspace())
+ *   2. no "and"/"or" at the beginning or and
+ *   3. no consecutive "and"/"or"
+ */
 bool isValidQuery(char* query) {
+  // copy query to preserve the original
+  char* queryCopy = calloc(strlen(query) + 1, sizeof(char));
+  strcpy(queryCopy, query);
+
   // query contains invalid characters
   char ch;
-  if ((ch = onlyAlphaSpaces(query)) != '\0') {
-    fprintf(stderr, "Error: bad character '%c' in query.\n", ch);
+  if ((ch = onlyAlphaSpaces(queryCopy)) != '\0') {
+    fprintf(stderr, "Error: bad character '%c' in query\n", ch);
     return false;
   }
 
-  // query starts with, ends with, or contains adjacent "AND"/"OR"
-  char* prevWord = NULL;
-  char* curWord = NULL;
+  // query starts with, ends with, or contains adjacent "and"/"or"
   int pos = 0;
-  while ((curWord = normalizeWord(nextWord(query, &pos))) != NULL) {
-    if (prevWord == NULL && isAndOr(curWord)) { // starts with
-      fprintf(stderr, "Error: query cannot start with 'AND'/'OR'\n");
-      return false;
-    } else if (isAndOr(prevWord) || isAndOr(curWord)) { // ends with
-      fprintf(stderr, "Error: query cannot contain consecutive 'AND'/'OR'\n");
-      return false;
-    }
-  }
-  // ends with "AND"/"OR"
-  if (isAndOr(prevWord)) {
-    fprintf(stderr, "Error: query cannot end with 'AND'/'OR'\n");
+  char* curWord = nextWord(queryCopy, &pos);
+  // starts with
+  if (isAndOr(curWord)) {
+    fprintf(stderr, "Error: query cannot start with 'and'/'or'\n");
+    free(queryCopy);
     return false;
   }
+  // adjacent
+  char* prevWord = curWord;
+  while ((curWord = nextWord(queryCopy, &pos)) != NULL) {
+    if (isAndOr(prevWord) && isAndOr(curWord)) {
+      fprintf(stderr, "Error: query cannot contain consecutive 'and'/'or'\n");
+      free(queryCopy);
+      return false;
+    }
+    prevWord = curWord;
+  }
+  // ends with
+  if (isAndOr(prevWord)) {
+    fprintf(stderr, "Error: query cannot end with 'and'/'or'\n");
+    free(queryCopy);
+    return false;
+  }
+  free(queryCopy);
   return true;
 }
 
@@ -171,6 +281,99 @@ bool isValidQuery(char* query) {
 bool isAndOr(char* word)
 {
   return (strcmp(word, "and") == 0 || strcmp(word, "or") == 0);
+}
+
+/*
+ * Turn a counter into a queryResArr, containing queryResults sorted
+ * by decreasing score
+ * 
+ */
+queryResArr_t* getSortedResults(counters_t* res)
+{
+  int size = 0;
+  counters_iterate(res, &size, getCounterSize);
+  // initialize new queryResArr_t
+  queryResArr_t* resArr = malloc(sizeof(queryResArr_t));
+  if (resArr == NULL) {
+    return NULL;
+  }
+  resArr->arr = calloc(size, sizeof(queryResult_t));
+  if (resArr->arr == NULL) {
+    return NULL;
+  }
+  resArr->pos = 0;
+
+  // add (docID, score) pairs from res into resArr
+  counters_iterate(res, resArr, addIntoArray);
+
+  // sort the array in resArr
+  qsort(resArr->arr, size, sizeof(queryResult_t), compareQueryResult);
+  return resArr;
+}
+
+void getCounterSize(void* arg, const int key, const int count)
+{
+  int* count_p = arg;
+  (*count_p)++;
+}
+
+void addIntoArray(void* arg, const int key, const int count)
+{
+  // create queryResult from counter entry
+  queryResult_t* queryRes = malloc(sizeof(queryResult_t));
+  if (queryRes == NULL) {
+    return;
+  }
+  queryRes->docID = key;
+  queryRes->score = count;
+
+  // insert queryResult into queryResArr
+  queryResArr_t* resArr = arg;
+  resArr->arr[resArr->pos++] = queryRes;
+}
+
+/*
+ * Helper function to sort queryResults in decreasing score order
+ */
+int compareQueryResult(const void* a, const void* b)
+{
+  queryResult_t* ptrA = (queryResult_t*) a;
+  queryResult_t* ptrB = (queryResult_t*) b;
+  return ptrB->score - ptrA->score;
+}
+
+void outputQueryResults(const queryResArr_t* resArr, const char* pageDirectory)
+{
+  // resArr->pos is incremented once for each inserted item,
+  // so it's equivalent to size of resArr->arr
+  int size = resArr->pos;
+  if (size == 0) { // empty
+    println("No documents match");
+  } else if (size == 1) {
+    println("Matches 1 document:");
+  } else {
+    printf("Matches %d documents (ranked):\n", size);
+  }
+
+  for (int i = 0; i < size; i++) {
+    queryResult_t* queryRes = resArr->arr[i];
+    char* url = pagedir_loadUrlFromFile(pageDirectory, i + 1);
+    if (url == NULL) {
+      fprintf(stderr, "Error reading url from file in %s\n", pageDirectory);
+      return;
+    }
+    printf("score\t%d doc %3d: %s\n", queryRes->score, queryRes->docID, url);
+    free(url);
+  }
+}
+
+void queryResArr_delete(queryResArr_t* resArr)
+{
+  for (int i = 0; i < resArr->pos; i++) {
+    free(resArr->arr[i]);
+  }
+  free(resArr->arr);
+  free(resArr);
 }
 
 /*
@@ -189,7 +392,7 @@ bool isAndOr(char* word)
  */
 void intersectCounters(counters_t* from, counters_t** to_p)
 {
-  // merge `to` into `fromCopy` to initialize missing keys in fromCopy as 0,
+  // merge `to` into `fromCopy` to initialize missing keys in fromCopy to 0,
   // then merge `fromCopy` into `to`
   counters_t* to = *to_p;
   counters_t* fromCopy = copyCounter(from);
@@ -198,10 +401,10 @@ void intersectCounters(counters_t* from, counters_t** to_p)
   counters_delete(fromCopy);
 
   // create a new counter to keep only the nonzero counts
-  counters_t* result = counters_new();
-  counters_iterate(to, result, setIfNonzero);
+  counters_t* res = counters_new();
+  counters_iterate(to, res, setIfNonzero);
   counters_delete(to);
-  *to_p = result;
+  *to_p = res;
 }
 
 /*
@@ -225,9 +428,9 @@ void mergeMinCount(void* arg, const int key, const int item)
  */
 void setIfNonzero(void* arg, const int key, const int item)
 {
-  counters_t* result = arg;
+  counters_t* res = arg;
   if (item > 0) {
-    counters_set(result, key, item);
+    counters_set(res, key, item);
   }
 }
 

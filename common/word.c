@@ -21,6 +21,42 @@ void normalizeWord(char* word)
   }
 }
 
+char* stripAndCompactSpaces(char* string)
+{
+
+  char* src = string; // used to loop through the original string
+
+  // skip leading spaces
+  while (isspace(*src)) {
+    src++;
+  }
+  if (*src == '\0') { // all spaces
+    return NULL;
+  }
+  char* toReturn = src; // start of non-space
+
+  // compress consecutive spaces
+  char* res = string; // used to update string
+  bool consecutive = false; // seen space already?
+  while (*src != '\0') {
+    if (isspace(*src)) {
+      if (!consecutive) {
+        *res = ' ';
+        res++;
+        consecutive = true;
+      }
+    } else {
+      consecutive = false;
+      *res = *src;
+      res++;
+    }
+    src++;
+  }
+  *res = '\0';
+  return toReturn;
+  // printf("%s\n", string);
+}
+
 char onlyAlphaSpaces(char* string)
 {
   for (char* ptr = string; *ptr != '\0'; ptr++) {
@@ -55,5 +91,6 @@ char* nextWord(char* string, int* pos)
     string[*pos] = '\0';
     (*pos)++;
   }
+  normalizeWord(&string[start]);
   return &string[start];
 }

@@ -24,7 +24,8 @@ querier: $(OBJS) $(LLIBS)
 	$(CC) $(CFLAGS) $^ $(LIBS) -o $@
 
 # object files also depend on include files
-querier.o: # TODO
+querier.o: $L/hashtable.h $L/counters.h $L/file.h\
+$C/pagedir.h $C/print.h $C/index.h $C/word.h $C/pagedir.h
 
 test: querier testing.sh
 	bash -v ./testing.sh

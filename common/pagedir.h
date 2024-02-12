@@ -51,8 +51,8 @@ bool pagedir_save(const webpage_t* page, const char* pageDirectory, const int do
  * Loads a file saved by pagedir_save(), into a webpage_t*
  * 
  * Input:
- *   pageDirectory: file to load the page from
- *   docID: name of file (int greater than 0)
+ *   pageDirectory: directory to load the page from
+ *   docID: name of file
  *   
  * Returns:
  *   webpage_t* containing file contents if success
@@ -62,6 +62,22 @@ bool pagedir_save(const webpage_t* page, const char* pageDirectory, const int do
  * Caller needs to call webpage_delete() on the webpage_t* returned
  */
 webpage_t* pagedir_loadPageFromFile(const char* pageDirectory, const int docID);
+
+/*
+ * Reads the URL (first line) from a file
+ * 
+ * Input:
+ *   pageDirectory: directory to load the page from
+ *   docID: name of file
+ *   
+ * Returns:
+ *   the URL if success
+ *   NULL if any error occurs:
+ *     pageDirectory is NULL or invalid, page is NULL, docID <= 0, file read failure
+ * 
+ * Caller needs to free() the string returned
+ */
+char* pagedir_loadUrlFromFile(const char* pageDirectory, const int docID);
 
 /*
  * Checks for the existence of "pageDirectory/.crawler", which
