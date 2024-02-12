@@ -35,7 +35,7 @@ chmod a=r ./readOnlyFile
 rm -rf ./readOnlyFile
 
 
-# -----Functional & Valgrind tests-----
+# -----System & Valgrind tests-----
 # backup indexes
 directory="../indexes"
 if [[ -d "$directory" ]]; then
