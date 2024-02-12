@@ -47,6 +47,11 @@ typedef struct queryResArr {
   int pos;
 } queryResArr_t;
 
+typedef struct counterPair {
+  counters_t* from;
+  counters_t* to;
+} counterPair_t;
+
 /* Private functions */
 int fileno(FILE* stream);
 static index_t* parseArgs(const int argc, char* argv[], char** pageDirectory_p);
@@ -68,7 +73,7 @@ static void outputQueryResults(const queryResArr_t* resArr, const char* pageDire
 // combining counters
 static void intersectCounters(counters_t* from, counters_t** to_p);
 static void mergeMinCount(void* arg, const int key, const int item);
-static void setIfNonzero(void* arg, const int key, const int item);
+static void copyIfNonzero(void* arg, const int key, const int item);
 
 static void unionCounters(counters_t* from, counters_t* to);
 static void mergeAddCount(void* arg, const int key, const int item);
@@ -174,12 +179,7 @@ void processQuery(const index_t* idx, char* query, const char* pageDirectory)
   while (word != NULL) {
     // by default, reading a word will "and" it with any previous sequence
     // if read "or", then union `temp` into `result`
-    if (!isAndOr(word)) { // read a word
-      // ignore words with length < 3
-      if (strlen(word) < 3) {
-        continue;
-      }
-
+    if (!isAndOr(word) && strlen(word) >= 3) { // read a length >=3 word
       counters_t* counter = index_getWord(idx, word);
       // if word isn't found, reset temp and skip this and-sequence
       if (counter == NULL) {
@@ -392,41 +392,39 @@ void queryResArr_delete(queryResArr_t* resArr)
  */
 void intersectCounters(counters_t* from, counters_t** to_p)
 {
-  // merge `to` into `fromCopy` to initialize missing keys in fromCopy to 0,
-  // then merge `fromCopy` into `to`
   counters_t* to = *to_p;
-  counters_t* fromCopy = copyCounter(from);
-  counters_iterate(to, fromCopy, mergeMinCount);
-  counters_iterate(fromCopy, to, mergeMinCount);
-  counters_delete(fromCopy);
+  counterPair_t fromTo = {from, to};
+  // for every key in `to`, get the min of counts in `from` and `to`
+  counters_iterate(to, &fromTo, mergeMinCount);
 
   // create a new counter to keep only the nonzero counts
   counters_t* res = counters_new();
-  counters_iterate(to, res, setIfNonzero);
+  counters_iterate(to, res, copyIfNonzero);
   counters_delete(to);
   *to_p = res;
 }
 
 /*
- * Adds a (key, item) pair into arg (a counters_t*). If the key already exists,
+ * Adds a (key, item) pair into arg->to (a counterPair_t*). If the key already exists,
  * set the item to be the minimum in the two counters. Otherwise, set to 0.
  *
  * Inputs:
- *   arg: target counter to copy into
+ *   arg: pair of counters
  *   (key, item) pair
  */
 void mergeMinCount(void* arg, const int key, const int item)
 {
-  counters_t* to = arg;
-  int count = counters_get(to, key);
-  // minimum of original counts
-  counters_set(to, key, count < item ? count: item);
+  counterPair_t* fromTo = arg;
+  counters_t* to = fromTo->to;
+  int fromCount = counters_get(fromTo->from, key);
+  // minimum of fromCount and toCount (item)
+  counters_set(to, key, fromCount < item ? fromCount : item);
 }
 
 /*
  * Filter out item == 0 pairs by only adding nonzero pairs into `arg`
  */
-void setIfNonzero(void* arg, const int key, const int item)
+void copyIfNonzero(void* arg, const int key, const int item)
 {
   counters_t* res = arg;
   if (item > 0) {
