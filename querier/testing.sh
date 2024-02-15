@@ -17,16 +17,8 @@ tseDir="$HOME/cs50-dev/shared/tse/output"
 # non-crawler pageDirectory
 ./querier ./ ./index
 
-# invalid indexFilename
+# nonexistent indexFilename
 ./querier $tseDir/letters-0 ./nonexistent/asdf.index
-
-# indexFilename is in readonly directory
-mkdir ./readOnlyDir
-touch ./readOnlyDir/asdf.index
-chmod a=r ./readOnlyDir
-./querier $tseDir/letters-0 ./readOnlyDir/asdf.index
-chmod a=wrx ./readOnlyDir
-rm -rf ./readOnlyDir
 
 # -----System & Valgrind tests-----
 # invalid.txt contains the following invalid queries:

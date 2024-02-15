@@ -297,7 +297,7 @@ queryResArr_t* getSortedResults(counters_t* res)
   if (resArr == NULL) {
     return NULL;
   }
-  resArr->arr = calloc(size, sizeof(queryResult_t));
+  resArr->arr = calloc(size, sizeof(queryResult_t*));
   if (resArr->arr == NULL) {
     return NULL;
   }
@@ -362,7 +362,7 @@ void outputQueryResults(const queryResArr_t* resArr, const char* pageDirectory)
       fprintf(stderr, "Error reading url from file in %s\n", pageDirectory);
       return;
     }
-    printf("score\t%d doc %3d: %s\n", queryRes->score, queryRes->docID, url);
+    printf("score %3d doc %3d: %s\n", queryRes->score, queryRes->docID, url);
     free(url);
   }
 }
@@ -374,6 +374,27 @@ void queryResArr_delete(queryResArr_t* resArr)
   }
   free(resArr->arr);
   free(resArr);
+}
+
+/*
+ * Creates a copy of a counter.
+ *
+ * Caller is responsible for calling counters_delete on the returned counter
+ */
+counters_t* copyCounter(counters_t* counter)
+{
+  counters_t* copy = counters_new();
+  counters_iterate(counter, copy, copyCounterHelper);
+  return copy;
+}
+
+/*
+ * Helper function for copyCounter
+ */
+void copyCounterHelper(void* arg, const int key, const int item)
+{
+  counters_t* copy = arg;
+  counters_set(copy, key, item);
 }
 
 /*
@@ -412,23 +433,23 @@ void intersectCounters(counters_t* from, counters_t** to_p)
  *   arg: pair of counters
  *   (key, item) pair
  */
-void mergeMinCount(void* arg, const int key, const int item)
+void mergeMinCount(void* arg, const int key, const int count)
 {
   counterPair_t* fromTo = arg;
   counters_t* to = fromTo->to;
   int fromCount = counters_get(fromTo->from, key);
   // minimum of fromCount and toCount (item)
-  counters_set(to, key, fromCount < item ? fromCount : item);
+  counters_set(to, key, fromCount < count ? fromCount : count);
 }
 
 /*
  * Filter out item == 0 pairs by only adding nonzero pairs into `arg`
  */
-void copyIfNonzero(void* arg, const int key, const int item)
+void copyIfNonzero(void* arg, const int key, const int count)
 {
   counters_t* res = arg;
-  if (item > 0) {
-    counters_set(res, key, item);
+  if (count > 0) {
+    counters_set(res, key, count);
   }
 }
 
@@ -452,31 +473,10 @@ static void unionCounters(counters_t* from, counters_t* to)
  *   arg: target counter to copy into
  *   (key, item) pair
  */
-void mergeAddCount(void* arg, const int key, const int item)
+void mergeAddCount(void* arg, const int key, const int count)
 {
   counters_t* to = arg;
   // new count is sum of original counts
-  int count = counters_get(to, key);
-  counters_set(to, key, count + item);
-}
-
-/*
- * Creates a copy of a counter.
- *
- * Caller is responsible for calling counters_delete on the returned counter
- */
-counters_t* copyCounter(counters_t* counter)
-{
-  counters_t* copy = counters_new();
-  counters_iterate(counter, copy, copyCounterHelper);
-  return copy;
-}
-
-/*
- * Helper function for copyCounter
- */
-void copyCounterHelper(void* arg, const int key, const int item)
-{
-  counters_t* copy = arg;
-  counters_set(copy, key, item);
+  int toCount = counters_get(to, key);
+  counters_set(to, key, toCount + count);
 }
