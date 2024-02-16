@@ -221,7 +221,7 @@ char* nextWord(char* string, int* pos);
 
 ## Error handling and recovery
 
-Command line arguments are checked by `parseArgs` before the querier starts processing queries. Any errors will be printed to stderr and the querier exits with non-zero status.
+Command line arguments are checked by `parseArgs` before the querier starts processin queries. Any errors will be printed to stderr and the querier exits with non-zero status.
 
 All functions will check for NULL pointers before executing. If there is not enough memory to initiate a new index, the querier will exit normally without doing anything. If a query is invalid, a message will be printed containing the issue, and the querier will continue to prompt for queries.
 
