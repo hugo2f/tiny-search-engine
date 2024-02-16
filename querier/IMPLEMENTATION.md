@@ -9,7 +9,7 @@ In this document, the following implementation details are described:
 
 ## Data structures
 
-The `querier` answers search queries using an `index`. See [`index.h`](../common/index.h) and the [`indexer` implementation spec](../indexer/IMPLEMENTATION.md) directory for details about the representation of the index.
+The `querier` answers search queries using an `index`. See [`index.h`](../common/index.h) and the [indexer implementation spec](../indexer/IMPLEMENTATION.md) directory for details about the representation of the index.
 
 ## Control flow
 The `querier` is implemented in `querier.c` with four functions:
@@ -134,7 +134,7 @@ Helper function for `unionCounter`. For a key in `from`, add the corresponding c
 ## Other modules
 
 ### pagedir
-In addition to the `pagedir` functions implemented for the crawler and indexer, several new helper functions are added for file related operations used by the indexer.
+In addition to the `pagedir` functions implemented for the crawler and indexer, several new helper functions are added for file related operations used by the querier.
 
 `pagedir_loadUrlFromFile`: reads the first line (the URL) from a crawler-generated file.
 ```
@@ -146,7 +146,7 @@ read and return the URL
 
 
 ### index
-In the querier, an index is used to store and get counters corresponding to each word. For more details, refer to the [`indexer` implementation spec](../indexer/IMPLEMENTATION.md#index). The querier implements a getter to retrieve the counter for a given word.
+In the querier, an index is used to store and get counters corresponding to each word. For more details, refer to the [indexer implementation spec](../indexer/IMPLEMENTATION.md#index). The querier implements a getter to retrieve the counter for a given word.
 
 
 ### word
@@ -221,7 +221,7 @@ char* nextWord(char* string, int* pos);
 
 ## Error handling and recovery
 
-Command line arguments are checked by `parseArgs` before the indexer processes any pages. Any errors will be printed to stderr and the querier exits with non-zero status.
+Command line arguments are checked by `parseArgs` before the querier starts processing queries. Any errors will be printed to stderr and the querier exits with non-zero status.
 
 All functions will check for NULL pointers before executing. If there is not enough memory to initiate a new index, the querier will exit normally without doing anything. If a query is invalid, a message will be printed containing the issue, and the querier will continue to prompt for queries.
 
