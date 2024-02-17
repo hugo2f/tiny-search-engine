@@ -29,14 +29,13 @@ We anticipate the following modules or functions:
 1. `main`, which parses arguments and initializes other modules 
 2. `processQuery`, which processes a query and outputs the search results
 3. `intersectCounters`, which finds the intersection between two `counters`, setting the `score` items to be the minimum of the scores in each counter
-4. `unionCounter`, which finds the union of two `counters`, setting the `score` items to be the sum of scores in each counter
-5. `sortByScore`, which sorts a list of pages in decreasing order of score
-# TODO: check this after
+4. `unionCounters`, which finds the union of two `counters`, setting the `score` items to be the sum of scores in each counter
+5. `getSortedResults`, which sorts a list of pages in decreasing order of score
 
 And some helper modules:
-1. `index`, which provides the data structure to represent an index, and functions to read and write index files
-2. `word`, which provides the functions to verify the format of and tokenize a query
-# TODO: add anything missing
+1. `pagedir`, which provides functions to validate the `pageDirectory` and `indexFilename`, and to read the URL from crawler-produced files
+2. `index`, which provides the data structure to represent an index, and functions to read and write index files
+3. `word`, which provides the functions to verify the format of and tokenize a query
 
 
 ### Pseudocode for logic/algorithmic flow
@@ -62,9 +61,7 @@ The query results are stored in a `counters`, with `docID` keys and `score` item
 ### Testing plan
 
 #### Integration testing
-#TODO: fuzzquery?
-The `indexer` will be tested by
-
+The `indexer` will be tested with multiple arguments with both invalid and valid queries:
 1. Test `querier` with various invalid arguments:
   a. no arguments
   b. one argument
@@ -74,5 +71,5 @@ The `indexer` will be tested by
   f. nonexistent `indexFilename`
   g. `indexFilename` is in read-only directory
   h. `indexFilename` is read-only
-2. Run `querier` on a variety of `pageDirectories` and corresponding `indexFilenames`
+2. Run `querier` on a variety of `pageDirectories` and corresponding `indexFilenames`, using `fuzzquery` to generate valid queries
 3. Run `valgrind` on the above tests to ensure no memory leaks or errors
