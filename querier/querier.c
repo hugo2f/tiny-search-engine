@@ -357,7 +357,7 @@ void outputQueryResults(const queryResArr_t* resArr, const char* pageDirectory)
 
   for (int i = 0; i < size; i++) {
     queryResult_t* queryRes = resArr->arr[i];
-    char* url = pagedir_loadUrlFromFile(pageDirectory, i + 1);
+    char* url = pagedir_loadUrlFromFile(pageDirectory, queryRes->docID);
     if (url == NULL) {
       fprintf(stderr, "Error reading url from file in %s\n", pageDirectory);
       return;
